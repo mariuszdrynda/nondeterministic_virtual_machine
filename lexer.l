@@ -1,0 +1,107 @@
+%{
+    #include <iostream>
+    #include "node.hpp"
+    #include "parser.tab.h"
+    using namespace std;
+%}
+
+%option noyywrap yylineno
+
+%%
+
+    /*TYPES*/
+
+"String"    {return STRING;}
+"I64"   {return I64;}
+"F64"   {return F64;}
+"Char"  {return CHAR;}
+"Bool"  {return BOOL;}
+"Void"  {return VOID;}
+
+    /*keywords*/
+
+"operator"  {return OPERATOR;}
+"continue"  {return CONTINUE;}
+"success"   {return SUCCESS;}
+"switch"    {return SWITCH;}
+"struct"    {return STRUCT;}
+"data"  {return DATA;}
+"fn"    {return FN;}
+"lazy"  {return LAZY;}
+"ret"   {return RET;}
+"yield" {return YIELD;}
+"case"  {return CASE;}
+"every" {return EVERY;}
+"while" {return WHILE;}
+"do"    {return DO;}
+"if"    {return IF;}
+"else"  {return ELSE;}
+"break" {return BREAK;}
+"nop"   {return NOP;}
+"nil"   {return NIL;}
+"self"  {return SELF;}
+"fail"  {return FAIL;}
+
+    /*operators*/
+
+"limit" {return LIMIT;}
+"or"    {return NDTOR;}
+"and"   {return NDTAND;}
+"not"   {return NDTNOT;}
+"\\\\"  {return LAMBDA_BEGINER;}
+"=>"    {return BIG_ARROW;}
+"->"    {return ARROW;}
+"=="    {return EQ;}
+"!="    {return NEQ;}
+">="    {return GE;}
+"<="    {return LE;}
+"<<"    {return SHL;}
+">>"    {return SHR;}
+"||"    {return LOGOR;}
+"&&"    {return LOGAND;}
+"=" {return '=';}
+"," {return ',';}
+"|" {return '|';}
+"^" {return '^';}
+"&" {return '&';}
+"<" {return '<';}
+">" {return '>';}
+"+" {return '+';}
+"*" {return '*';}
+"/" {return '/';}
+"%" {return '%';}
+"-" {return '-';}
+"!" {return '!';} 
+"~" {return '~';}
+"." {return '.';}
+":" {return ':';}
+"}" {return '}';}
+";" {return ';';}
+"[" {return '[';}
+"]" {return ']';}
+")" {return ')';}
+"{" {return '{';}
+"(" {return '(';}
+
+    /*literals*/
+
+"false" {return FALSE;}
+"true" {return TRUE;}
+[1-9]("\'"?[0-9])*("i64")? {yylval.I64_LITERAL = std::stoll(yytext); return I64_LITERAL;}
+
+    /* identifier */
+
+[_a-zA-Z][_a-zA-Z0-9]* {yylval.ID = yytext; return ID;}
+
+    /*spaces*/
+
+[ \t]   {/*do nothing*/}
+\n      {/*add newline*/}
+.       {cerr<<"Error. Unrecognized token\n";}
+
+    /*comments*/
+
+"//"([^\n\\]|"\\\n")*\n {/*do nothing*/} /* TODO błąd */
+"/*"([^"*"]|("*"[^"/"]))*"*/" {/*do nothing*/}
+
+%%
