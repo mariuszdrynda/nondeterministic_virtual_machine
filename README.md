@@ -26,7 +26,7 @@ Requirements: Bison 3.4, FLex 2.6.4, C++ 14 (I'm using G++ 7.2)
 - change type of name string in node and nodeList to enum
 - Freeing Discarded Symbols (chapter 3.7.7 in bison's doc)
 
-##### and fix bugs:
+##### and fix bugs
 
 - IDs contains too much information
 - compilation is not terminating after seing unrecognized token
@@ -37,7 +37,8 @@ Requirements: Bison 3.4, FLex 2.6.4, C++ 14 (I'm using G++ 7.2)
 - build proper structs from generic structures
 - matching functions to their calls
 
-- Detection of errors:
+##### Detection of errors
+
 - missing '_' in switch
 - a = 5 = 7
 - undefined operation for variables of two different types (example: a+b, for a:Int, b:String)

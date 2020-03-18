@@ -40,12 +40,12 @@ topList: top {$$ = new NodeList(yylineno, "SEPARATOR", $1);}
 top: return_statement {$$ = $1;}
 | STRUCT ID '{' structList '}' {$$ = new Node(yylineno, "STRUCT", $2, $4);}
 | DATA ID '{' dataList '}' {$$ = new Node(yylineno, "DATA", $2, $4);}
-| lazyFunction FN ID '(' argList ')' ':' type BIG_ARROW '{' topList '}' {$$ = new Node(yylineno, "FN", $1, $3, $5, $8, $11);}
-| lazyFunction OPERATOR oper '(' argList ')' ':' type BIG_ARROW '{' topList '}'
+| lazyFunction FN ID '(' emptyOrArgList ')' ':' type BIG_ARROW '{' topList '}' {$$ = new Node(yylineno, "FN", $1, $3, $5, $8, $11);}
+| lazyFunction OPERATOR oper '(' emptyOrArgList ')' ':' type BIG_ARROW '{' topList '}'
     {
         $$ = new Node(yylineno, "OPERATOR_OVERLOADING", $1, $3, $5, $8, $11);
     }
-| lazyFunction OPERATOR error '(' argList ')' ':' type BIG_ARROW '{' topList '}'
+| lazyFunction OPERATOR error '(' emptyOrArgList ')' ':' type BIG_ARROW '{' topList '}'
     {
         yyerror("Syntax error in operator overloading. Bad operator.");
     }
