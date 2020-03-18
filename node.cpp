@@ -3,6 +3,8 @@ string Node::print(){
     return "("+(this->name)+"["+to_string(this->line)+"]"+
         (this->strval != "" ? (this->strval) :"")+
         (this->i64val != 0 ? to_string(this->i64val) : "")+
+        (this->f64val != 0 ? to_string(this->f64val) : "")+
+        (this->charval != 0 ? to_string(this->charval) : "")+
         (this->children1 != nullptr ? children1->print() :"")+
         (this->children2 != nullptr ? children2->print() :"")+
         (this->children3 != nullptr ? children3->print() :"")+
@@ -26,6 +28,16 @@ Node::Node(unsigned line, string m_name, long long value){
     this->line = line;
     this->name = m_name;
     this->i64val = value;
+}
+Node::Node(unsigned line, string m_name, double value){
+    this->line = line;
+    this->name = m_name;
+    this->f64val = value;
+}
+Node::Node(unsigned line, string m_name, char value){
+    this->line = line;
+    this->name = m_name;
+    this->charval = value;
 }
 Node::Node(unsigned line, string m_name, Node* child1){
     this->line = line;

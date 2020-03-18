@@ -11,20 +11,22 @@
 %}
 
 %define api.value.type union
-%type<NodeList*> topList structList dataList case_list elseOpt expressionList typeList argList
+%type<NodeList*> topList structList dataList case_list elseOpt expressionList typeList emptyOrArgList argList
 %type<Node*> top oper lazyFunction return_statement assignment_expression 
 %type<Node*> switch_statement  case_statement loop_statement if_statement breaker nondeterministic_and_expression
 %type<Node*> nondeterministic_or_expression nondeterministic_limit_expression nondeterministic_not_expression
 %type<Node*> logical_OR_expression logical_AND_expression inclusive_OR_expression exclusive_OR_expression
 %type<Node*> binary_and_expression equality_expression relational_expression shift_expression additive_expression 
 %type<Node*> multiplicative_expression unary_expression postfix_expression primary_expression topOrEmpty lambda type
-%token<char*> ID
+%token<char*> ID STRING_LITERAL
 %token<long long> I64_LITERAL
+%token<char> CHAR_LITERAL
+%token<double> F64_LITERAL
 %token FN STRUCT DATA OPERATOR LAZY RET YIELD SWITCH CASE ARROW EVERY WHILE DO IF ELSE BREAK CONTINUE
 %token NDTAND NDTOR LIMIT NDTNOT LOGOR LOGAND EQ NEQ LE GE SHL SHR
 %token FALSE TRUE LAMBDA_BEGINER BIG_ARROW NOP NIL SELF SUCCESS FAIL 
 %token I64 F64 STRING CHAR BOOL VOID
-%token ';' '(' ')' '{' '}' '[' ']' ':' '.' '-' '!' '~' '+' '*' '/' '%' '^' "&"  '<' '>' '|' ',' '='
+%token ';' '(' ')' '{' '}' '[' ']' '_' ':' '.' '-' '!' '~' '+' '*' '/' '%' '^' "&"  '<' '>' '|' ',' '='
 
 %%
 
@@ -215,13 +217,14 @@ primary_expression: FALSE {$$ = new Node(yylineno, "FALSE");}
 | NIL {$$=new Node(yylineno, "NIL");}
 | SELF {$$=new Node(yylineno, "SELF");}
 | I64_LITERAL {$$ = new Node(yylineno, "I64", $1);}
-// | CHAR_LITERAL
-// | F64_LITERAL
-// | STRING_LITERAL
+| CHAR_LITERAL {$$ = new Node(yylineno, "CHAR", $1);}
+| F64_LITERAL {$$ = new Node(yylineno, "F64", $1);}
+| STRING_LITERAL {$$ = new Node(yylineno, "STRING", $1);}
 | lambda {$$=$1;}
 | SUCCESS {$$=new Node(yylineno, "SUCCESS");}
 | FAIL {$$=new Node(yylineno, "FAIL");}
 | NOP {$$=new Node(yylineno, "NOP");}
+| '_' {$$=new Node(yylineno, "UNDERSCORE");}
 | '(' top ')' {$$=$2;}
 // | '{' top '}' {$$=$2;}
 | '[' top ']' {$$ = new Node(yylineno, "LIST", $2);}
@@ -231,7 +234,7 @@ topOrEmpty : top {$$=$1;}
 | %empty {$$ = new Node(yylineno, "EMPTY");}
 ;
 
-lambda: LAMBDA_BEGINER '(' argList ')' ':' type BIG_ARROW '{' topList '}' {$$ = new Node(yylineno, "LAMBDA", $6, $3, $9);}
+lambda: LAMBDA_BEGINER '(' emptyOrArgList ')' ':' type BIG_ARROW '{' topList '}' {$$ = new Node(yylineno, "LAMBDA", $6, $3, $9);}
 ;
 
 type: ID {$$ = new Node(yylineno, "TYPE_ID",$1);}
@@ -249,7 +252,10 @@ typeList: type {$$ = new NodeList(yylineno, "TYPELIST", $1);}
 | typeList ',' type {$1->addNode($3); $$ = $1;}
 ;
 
-argList: ID ':' type  {$$ = new NodeList(yylineno, "ARGLIST", new Node(yylineno, "ARG", $1, $3));}
+emptyOrArgList: %empty {$$ = new NodeList(yylineno, "ARGLIST", new Node(yylineno, "EMPTY"));}
+| argList {$$=$1;}
+
+argList: ID ':' type {$$ = new NodeList(yylineno, "ARGLIST", new Node(yylineno, "ARG", $1, $3));}
 | argList ',' ID ':' type {$1->addNode(new Node(yylineno, "ARG", $3, $5)); $$ = $1;}
 ;
 

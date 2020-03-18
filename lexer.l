@@ -7,6 +7,12 @@
 
 %option noyywrap yylineno
 
+fractional_constant (({digit_sequence}?"."{digit_sequence})|({digit_sequence}"."))
+exponent_part ([Ee][+-]?{digit_sequence})
+digit_sequence ([0-9]("\'"?[0-9])*)
+s_char [^"\"""\\"\n]
+c_char [^"\'""\\"\n]
+
 %%
 
     /*TYPES*/
@@ -75,8 +81,9 @@
 "~" {return '~';}
 "." {return '.';}
 ":" {return ':';}
-"}" {return '}';}
+"_" {return '_';}
 ";" {return ';';}
+"}" {return '}';}
 "[" {return '[';}
 "]" {return ']';}
 ")" {return ')';}
@@ -87,7 +94,10 @@
 
 "false" {return FALSE;}
 "true" {return TRUE;}
-[1-9]("\'"?[0-9])*("i64")? {yylval.I64_LITERAL = std::stoll(yytext); return I64_LITERAL;}
+[1-9]("\'"?[0-9])*("i64")? {yylval.I64_LITERAL = stoll(yytext); return I64_LITERAL;}
+(({fractional_constant}{exponent_part}?)|({digit_sequence}{exponent_part}))("f64")? {yylval.F64_LITERAL = stof(yytext); return F64_LITERAL;}
+"\'"{c_char}"\'" {yylval.CHAR_LITERAL = yytext[1]; return CHAR_LITERAL;}
+"\""({s_char})*"\"" {yylval.STRING_LITERAL = yytext; return STRING_LITERAL;}
 
     /* identifier */
 

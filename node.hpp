@@ -32,6 +32,8 @@ struct Node{
     Node(unsigned line, NodeList* childList);
     Node(unsigned line, string m_name, string value);
     Node(unsigned line, string m_name, long long value);
+    Node(unsigned line, string m_name, double value);
+    Node(unsigned line, string m_name, char value);
     Node(unsigned line, string m_name, Node* child1);
     Node(unsigned line, string m_name, string value, Node* child1);
     Node(unsigned line, string m_name, string value, NodeList* childList);
@@ -46,6 +48,8 @@ private:
     string name = "";
     string strval = "";
     long long i64val = 0;
+    double f64val = 0.0;
+    char charval = '\0';
     Node* children1 = nullptr;
     Node* children2 = nullptr;
     Node* children3 = nullptr;
