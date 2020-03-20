@@ -44,6 +44,11 @@ Node::Node(unsigned line, string m_name, Node* child1){
     this->name = m_name;
     this->children1 = child1;
 }
+Node::Node(unsigned line, string m_name, NodeList* childList){
+    this->line = line;
+    this->name = m_name;
+    this->childrenList1 = childList;
+}
 Node::Node(unsigned line, string m_name, string value, Node* child1){
     this->line = line;
     this->name = m_name;

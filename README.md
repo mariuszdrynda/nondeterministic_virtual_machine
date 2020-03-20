@@ -44,6 +44,7 @@ Requirements: Bison 3.4, FLex 2.6.4, C++ 14 (I'm using G++ 7.2)
 - undefined operation for variables of two different types (example: a+b, for a:Int, b:String)
 - divisoin by 0
 - index out of bound
+- two functions of same arguments types, and return type
 
 ### OPTIMALIZATIONS
 
@@ -61,3 +62,7 @@ Requirements: Bison 3.4, FLex 2.6.4, C++ 14 (I'm using G++ 7.2)
 
 - add example codes
 - write some simple libraries
+
+## PROPOSITIONS
+
+- delete else keyword

@@ -24,7 +24,7 @@
 %token<double> F64_LITERAL
 %token FN STRUCT DATA OPERATOR LAZY RET YIELD SWITCH CASE ARROW EVERY WHILE DO IF ELSE BREAK CONTINUE
 %token NDTAND NDTOR LIMIT NDTNOT LOGOR LOGAND EQ NEQ LE GE SHL SHR
-%token FALSE TRUE LAMBDA_BEGINER BIG_ARROW NOP NIL SELF SUCCESS FAIL 
+%token FALSE TRUE LAMBDA_BEGINER NOP NIL SELF SUCCESS FAIL 
 %token I64 F64 STRING CHAR BOOL VOID
 %token ';' '(' ')' '{' '}' '[' ']' '_' ':' '.' '-' '!' '~' '+' '*' '/' '%' '^' "&"  '<' '>' '|' ',' '='
 
@@ -40,12 +40,12 @@ topList: top {$$ = new NodeList(yylineno, "SEPARATOR", $1);}
 top: return_statement {$$ = $1;}
 | STRUCT ID '{' structList '}' {$$ = new Node(yylineno, "STRUCT", $2, $4);}
 | DATA ID '{' dataList '}' {$$ = new Node(yylineno, "DATA", $2, $4);}
-| lazyFunction FN ID '(' emptyOrArgList ')' ':' type BIG_ARROW '{' topList '}' {$$ = new Node(yylineno, "FN", $1, $3, $5, $8, $11);}
-| lazyFunction OPERATOR oper '(' emptyOrArgList ')' ':' type BIG_ARROW '{' topList '}'
+| lazyFunction FN ID '(' emptyOrArgList ')' ':' type '{' topList '}' {$$ = new Node(yylineno, "FN", $1, $3, $5, $8, $10);}
+| lazyFunction OPERATOR oper '(' emptyOrArgList ')' ':' type '{' topList '}'
     {
-        $$ = new Node(yylineno, "OPERATOR_OVERLOADING", $1, $3, $5, $8, $11);
+        $$ = new Node(yylineno, "OPERATOR_OVERLOADING", $1, $3, $5, $8, $10);
     }
-| lazyFunction OPERATOR error '(' emptyOrArgList ')' ':' type BIG_ARROW '{' topList '}'
+| lazyFunction OPERATOR error '(' emptyOrArgList ')' ':' type '{' topList '}'
     {
         yyerror("Syntax error in operator overloading. Bad operator.");
     }
@@ -226,15 +226,15 @@ primary_expression: FALSE {$$ = new Node(yylineno, "FALSE");}
 | NOP {$$=new Node(yylineno, "NOP");}
 | '_' {$$=new Node(yylineno, "UNDERSCORE");}
 | '(' top ')' {$$=$2;}
-// | '{' top '}' {$$=$2;}
-| '[' top ']' {$$ = new Node(yylineno, "LIST", $2);}
+| '{' topList '}' {$$ = new Node(yylineno, "OBJECT", $2);}
+| '[' topList ']' {$$ = new Node(yylineno, "LIST", $2);}
 ;
 
-topOrEmpty : top {$$=$1;}
+topOrEmpty: top {$$=$1;}
 | %empty {$$ = new Node(yylineno, "EMPTY");}
 ;
 
-lambda: LAMBDA_BEGINER '(' emptyOrArgList ')' ':' type BIG_ARROW '{' topList '}' {$$ = new Node(yylineno, "LAMBDA", $6, $3, $9);}
+lambda: LAMBDA_BEGINER '(' emptyOrArgList ')' ':' type '{' topList '}' {$$ = new Node(yylineno, "LAMBDA", $6, $3, $8);}
 ;
 
 type: ID {$$ = new Node(yylineno, "TYPE_ID",$1);}
@@ -245,7 +245,8 @@ type: ID {$$ = new Node(yylineno, "TYPE_ID",$1);}
 | BOOL {$$ = new Node(yylineno, "TYPE_BOOL");}
 | VOID {$$ = new Node(yylineno, "TYPE_VOID");}
 | '[' type ']' {$$ = new Node(yylineno, "TYPE_ARRAY", $2);}
-| '(' typeList BIG_ARROW type ')' {$$ = new Node(yylineno, "TYPE_FN", $4, $2);}
+| '{' typeList '}' {$$ = new Node(yylineno, "TYPE_OBJECT", $2);}
+| '(' typeList ':' type ')' {$$ = new Node(yylineno, "TYPE_FN", $4, $2);}
 ;
 
 typeList: type {$$ = new NodeList(yylineno, "TYPELIST", $1);}

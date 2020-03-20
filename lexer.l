@@ -55,7 +55,6 @@ c_char [^"\'""\\"\n]
 "and"   {return NDTAND;}
 "not"   {return NDTNOT;}
 "\\\\"  {return LAMBDA_BEGINER;}
-"=>"    {return BIG_ARROW;}
 "->"    {return ARROW;}
 "=="    {return EQ;}
 "!="    {return NEQ;}

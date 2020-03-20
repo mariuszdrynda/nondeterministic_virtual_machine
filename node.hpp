@@ -15,7 +15,10 @@ using namespace std;
 //     TYPE_STRING, TYPE_CHAR, TYPE_BOOL, TYPE_VOID, TYPE_ARRAY
 // };
 struct Node;
-struct NodeList{
+struct AST{
+    const Node* type = nullptr;
+};
+struct NodeList : public AST{
     NodeList(unsigned line, string type, Node* node);
     void addNode(Node* node);
     string printList();
@@ -26,7 +29,7 @@ private:
     string listType = "";
     vector<Node*> list;
 };
-struct Node{
+struct Node : public AST{
     string print();
     Node(unsigned line, string m_name);
     Node(unsigned line, NodeList* childList);
@@ -35,6 +38,7 @@ struct Node{
     Node(unsigned line, string m_name, double value);
     Node(unsigned line, string m_name, char value);
     Node(unsigned line, string m_name, Node* child1);
+    Node(unsigned line, string m_name, NodeList* childList);
     Node(unsigned line, string m_name, string value, Node* child1);
     Node(unsigned line, string m_name, string value, NodeList* childList);
     Node(unsigned line, string m_name, Node* child1, Node* child2);
