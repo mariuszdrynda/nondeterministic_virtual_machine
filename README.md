@@ -18,6 +18,8 @@ Requirements: Bison 3.4, FLex 2.6.4, C++ 14 (I'm using G++ 7.2)
 
 ## WORK THAT REMAINS
 
+- main goal for now is to switch from C version of Bison to C++. It'll be a lot more easy to manipulate AST and to avoid bugs
+
 ### PARSER
 
 - add modules
@@ -48,9 +50,10 @@ Requirements: Bison 3.4, FLex 2.6.4, C++ 14 (I'm using G++ 7.2)
 
 ### OPTIMALIZATIONS
 
-- counting of constexpr functions
+- count of constexpr functions
 - deleting never used functions
 - deleting never user structures (or fields)
+- cut everything from ret to funcion's end
 
 ### VIRTUAL MACHINE
 
@@ -63,6 +66,12 @@ Requirements: Bison 3.4, FLex 2.6.4, C++ 14 (I'm using G++ 7.2)
 - add example codes
 - write some simple libraries
 
+## FUTURE
+
+- debugger
+- doc generator
+
 ## PROPOSITIONS
 
 - delete else keyword
+- add shell

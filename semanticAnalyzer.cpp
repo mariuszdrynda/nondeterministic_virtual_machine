@@ -5,10 +5,16 @@ vector<Node*> functions;
 vector<Node*> operatorOverloaded;
 vector<Node*> structures;
 vector<Node*> datas;
-void semanticAnalyzerMain(Node* node){
 
+Node* findEntryPoint(NodeList* programList){
+    //TODO: find function of name main
+    //main can't be override
+    //main has return Void
+    //main can has no arguments or has [String] (this list could be empty)
+    //add main to functions
+    return programList[0];
 }
-
+void giveTypeToAllNodes(Node* node){
 /*TODO:
     - check all types, all nodes (and nodeList) have to have types
     -- for functions it's type they return
@@ -20,3 +26,9 @@ void semanticAnalyzerMain(Node* node){
     -- functions
     -- operator overloading
 */
+    /*BIG SWITCH*/
+}
+void semanticAnalyzerMain(NodeList* programList){
+    Node* entryPoint = findEntryPoint(programList);
+    giveTypeToAllNodes(entryPoint);
+}

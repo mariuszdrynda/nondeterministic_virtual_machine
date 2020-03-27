@@ -16,8 +16,29 @@ using namespace std;
 // };
 struct Node;
 struct AST{
-    const Node* type = nullptr;
+    // const Type* type = nullptr;
 };
+// struct TypeList{
+//     TypeList(int line, string type);
+//     void addType(Type* type);
+// private:
+//     int line;
+//     string type;
+//     vector<Type*> list;
+// };
+// struct Type{
+//     Type(int line, string type);
+//     Type(int line, string type, string value);
+//     Type(int line, string type, Type typeType);
+//     Type(int line, string type, TypeList* typeList);
+//     Type(int line, string type, TypeList* typeList, Type* typeType);
+// private:
+//     int line;
+//     string type;
+//     string value;
+//     TypeList* typeList;
+//     Type* typeType;
+// };
 struct NodeList : public AST{
     NodeList(unsigned line, string type, Node* node);
     void addNode(Node* node);

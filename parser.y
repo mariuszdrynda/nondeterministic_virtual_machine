@@ -9,7 +9,7 @@
     extern FILE *yyin;
     extern int yylineno;
 %}
-
+%define parse.error verbose
 %define api.value.type union
 %type<NodeList*> topList structList dataList case_list elseOpt expressionList typeList emptyOrArgList argList
 %type<Node*> top oper lazyFunction return_statement assignment_expression 
