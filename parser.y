@@ -24,7 +24,7 @@
 %token<double> F64_LITERAL
 %token FN STRUCT DATA OPERATOR LAZY RET YIELD SWITCH CASE ARROW EVERY WHILE DO IF ELSE BREAK CONTINUE
 %token NDTAND NDTOR LIMIT NDTNOT LOGOR LOGAND EQ NEQ LE GE SHL SHR
-%token FALSE TRUE LAMBDA_BEGINER NOP NIL SELF SUCCESS FAIL 
+%token FALSE TRUE LAMBDA_BEGINER NOP NIL SUCCESS FAIL 
 %token I64 F64 STRING CHAR BOOL VOID
 %token ';' '(' ')' '{' '}' '[' ']' '_' ':' '.' '-' '!' '~' '+' '*' '/' '%' '^' "&"  '<' '>' '|' ',' '='
 
@@ -215,7 +215,6 @@ primary_expression: FALSE {$$ = new Node(yylineno, "FALSE");}
 | TRUE {$$ = new Node(yylineno, "TRUE");}
 | ID {$$ = new Node(yylineno, "ID", $1);}
 | NIL {$$=new Node(yylineno, "NIL");}
-| SELF {$$=new Node(yylineno, "SELF");}
 | I64_LITERAL {$$ = new Node(yylineno, "I64", $1);}
 | CHAR_LITERAL {$$ = new Node(yylineno, "CHAR", $1);}
 | F64_LITERAL {$$ = new Node(yylineno, "F64", $1);}

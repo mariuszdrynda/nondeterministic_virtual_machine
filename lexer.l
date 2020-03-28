@@ -45,7 +45,6 @@ c_char [^"\'""\\"\n]
 "break" {return BREAK;}
 "nop"   {return NOP;}
 "nil"   {return NIL;}
-"self"  {return SELF;}
 "fail"  {return FAIL;}
 
     /*operators*/

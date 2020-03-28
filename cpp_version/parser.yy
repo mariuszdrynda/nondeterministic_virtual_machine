@@ -27,7 +27,10 @@
 ;
 %type  <std::shared_ptr<AST>> primary_expression
 %token <std::string> IDENTIFIER
-%token <long> I64LITERAL
+%token <double> F64_LITERAL
+%token <long long> I64_LITERAL
+%token <char> CHAR_LITERAL
+%token <bool> TRUE FALSE
 
 %%
 
@@ -35,18 +38,18 @@
 
 top: primary_expression { std::cout << $1->print(); }
 
-primary_expression: IDENTIFIER { $$ = std::make_shared<ID>(); }
-| I64LITERAL { $$=std::make_shared<Literal>(); }
+primary_expression: IDENTIFIER { $$ = std::make_shared<ID>($1); }
+| I64_LITERAL {$$ = std::make_shared<Literal>($1);}
+| F64_LITERAL {$$ = std::make_shared<Literal>($1);}
+| CHAR_LITERAL {$$ = std::make_shared<Literal>($1);}
+| FALSE {$$ = std::make_shared<Literal>(false);}
+| TRUE {$$ = std::make_shared<Literal>(true);}
 ;
 
-// primary_expression: FALSE {$$ = new Node(yylineno, "FALSE");}
-// | TRUE {$$ = new Node(yylineno, "TRUE");}
+// primary_expression: 
 // | NIL {$$=new Node(yylineno, "NIL");}
-// | SELF {$$=new Node(yylineno, "SELF");}
-// | CHAR_LITERAL {$$ = new Node(yylineno, "CHAR", $1);}
-// | F64_LITERAL {$$ = new Node(yylineno, "F64", $1);}
-// | STRING_LITERAL {$$ = new Node(yylineno, "STRING", $1);}
 // | lambda {$$=$1;}
+// | STRING_LITERAL {$$ = new Node(yylineno, "STRING", $1);}
 // | SUCCESS {$$=new Node(yylineno, "SUCCESS");}
 // | FAIL {$$=new Node(yylineno, "FAIL");}
 // | NOP {$$=new Node(yylineno, "NOP");}
