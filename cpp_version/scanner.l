@@ -5,6 +5,7 @@
 	#include <cstring> // strerror
 	#include <string>
 	#include "driver.hh"
+    #include "ast.hpp"
 	#include "parser.tab.hh"
 	#define YY_DECL yy::parser::symbol_type yylex(driver& drv)
 %}
@@ -31,7 +32,7 @@ blank [ \t\r]
   // A handy shortcut to the location held by the driver.
   yy::location& loc = drv.location;
   // Code run each time yylex is called.
-  loc.step ();
+  loc.step();
 %}
 
 {blank}+   loc.step();
@@ -55,7 +56,7 @@ yy::parser::symbol_type make_I64LITERAL(const std::string &s, const yy::parser::
 	return yy::parser::make_I64LITERAL((int) n, loc);
 }
 
-void driver::scan_begin (){
+void driver::scan_begin(){
 	if (file.empty() || file == "-") yyin = stdin;
 	else if (!(yyin = fopen (file.c_str(), "r"))){
 		std::cerr << "cannot open " << file << ": " << strerror(errno) << '\n';
@@ -63,6 +64,6 @@ void driver::scan_begin (){
 	}
 }
 
-void driver::scan_end() {
+void driver::scan_end(){
 	fclose (yyin);
 }
