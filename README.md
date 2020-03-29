@@ -28,7 +28,6 @@ Requirements: Bison 3.4, FLex 2.6.4, C++ 17 (I'm using G++ 7.2). C++ 17 is requi
 
 ### PARSER
 
-- add modules
 - add escape sequences in chars and strings
 - write own error messages (instead of default "syntax error")
 - change type of name string in node and nodeList to enum
@@ -79,5 +78,5 @@ Requirements: Bison 3.4, FLex 2.6.4, C++ 17 (I'm using G++ 7.2). C++ 17 is requi
 
 ## PROPOSITIONS
 
-- delete else keyword
+- add modules
 - add shell

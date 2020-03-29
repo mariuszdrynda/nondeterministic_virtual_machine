@@ -2,6 +2,17 @@
 #include <string>
 #include "location.hh"
 
+Expression::Expression(yy::location loc, ExpressionType t, std::shared_ptr<AST> l, std::shared_ptr<AST> r)
+    : expressionType(t), left(l), right(r){
+        AST::location = loc;
+    }
+Expression::Expression(yy::location loc, ExpressionType t, std::shared_ptr<AST> l): expressionType(t), left(l){
+        AST::location = loc;
+    }
+std::string Expression::print(){
+    if(right) return "(EXPRESSION"+std::to_string(expressionType)+left->print()+right->print()+")";
+    else return "(EXPRESSION"+std::to_string(expressionType)+left->print()+")";
+}
 Special::Special(SpecialType t): type(t){}
 std::string Special::print(){
     return "(SPECIAL("+std::to_string(type)+"))";

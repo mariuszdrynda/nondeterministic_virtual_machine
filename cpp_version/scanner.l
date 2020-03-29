@@ -52,6 +52,14 @@ c_char [^"\'""\\"\n]
 
 	/* operators */
 
+"\\\\"  return yy::parser::make_LAMBDA_BEGINER(loc);
+"+"     return yy::parser::make_ADD(loc);
+"-"     return yy::parser::make_MINUS(loc);
+"*"     return yy::parser::make_MUL(loc);
+"/"     return yy::parser::make_DIV(loc);
+"%"     return yy::parser::make_MOD(loc);
+"!"     return yy::parser::make_LOG_NOT(loc);
+"~"     return yy::parser::make_BIT_NOT(loc);
 "("     return yy::parser::make_LPAREN(loc);
 ")"     return yy::parser::make_RPAREN(loc);
 "{"     return yy::parser::make_LCB(loc);
@@ -59,6 +67,7 @@ c_char [^"\'""\\"\n]
 "["     return yy::parser::make_LSB(loc);
 "]"     return yy::parser::make_RSB(loc);
 "_"		return yy::parser::make_UNDERSCORE(loc);
+"."		return yy::parser::make_DOT(loc);
 
 	/* LITERALS */
 
