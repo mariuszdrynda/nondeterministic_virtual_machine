@@ -19,45 +19,58 @@
 %code {
 	#include "driver.hh"
 	yy::parser::symbol_type yylex(driver& drv);
+	std::shared_ptr<AST> programList;
 }
 
 %define api.token.prefix {TOK_}
 %token
-  END  0  "end of file"
+  END  0	"end of file"
+  LPAREN	"("
+  RPAREN	")"
+  LCB		"{"
+  RCB		"}"
+  LSB		"["
+  RSB		"]"
+  UNDERSCORE "_"
 ;
-%type  <std::shared_ptr<AST>> primary_expression
-%token <std::string> IDENTIFIER
+%type  <std::shared_ptr<AST>> topList top primary_expression lambda
+%token <std::string> IDENTIFIER STRING_LITERAL
 %token <double> F64_LITERAL
 %token <long long> I64_LITERAL
 %token <char> CHAR_LITERAL
 %token <bool> TRUE FALSE
+%token NIL SUCCESS FAIL NOP
 
 %%
 
-%start top;
+%start program;
 
-top: primary_expression { std::cout << $1->print(); }
+program: topList {programList = $1;}
 
-primary_expression: IDENTIFIER { $$ = std::make_shared<ID>($1); }
-| I64_LITERAL {$$ = std::make_shared<Literal>($1);}
-| F64_LITERAL {$$ = std::make_shared<Literal>($1);}
-| CHAR_LITERAL {$$ = std::make_shared<Literal>($1);}
-| FALSE {$$ = std::make_shared<Literal>(false);}
-| TRUE {$$ = std::make_shared<Literal>(true);}
+topList: top {$$=$1;}
+
+top: primary_expression {$$=$1;}
+
+primary_expression: IDENTIFIER { $$ = std::make_shared<ID>(drv.location, $1); }
+| I64_LITERAL {$$ = std::make_shared<Literal>(drv.location, $1);}
+| F64_LITERAL {$$ = std::make_shared<Literal>(drv.location, $1);}
+| CHAR_LITERAL {$$ = std::make_shared<Literal>(drv.location, $1);}
+| FALSE {$$ = std::make_shared<Literal>(drv.location, false);}
+| TRUE {$$ = std::make_shared<Literal>(drv.location, true);}
+| STRING_LITERAL {$$ = std::make_shared<Literal>(drv.location, $1);}
+| "(" top ")" {$$=$2;}
+| "{" top "}" {$$ = std::make_shared<Object>(drv.location, $2);}
+| "[" top "]" {$$ = std::make_shared<List>(drv.location, $2);}
+| NIL {$$ = std::make_shared<Special>(SpecialType::NIL);}
+| SUCCESS {$$ = std::make_shared<Special>(SpecialType::SUCCESS);}
+| FAIL {$$ = std::make_shared<Special>(SpecialType::FAIL);}
+| NOP {$$ = std::make_shared<Special>(SpecialType::NOP);}
+| "_" {$$ = std::make_shared<Special>(SpecialType::UNDERSCORE);}
+| lambda {$$=$1;}
 ;
 
-// primary_expression: 
-// | NIL {$$=new Node(yylineno, "NIL");}
-// | lambda {$$=$1;}
-// | STRING_LITERAL {$$ = new Node(yylineno, "STRING", $1);}
-// | SUCCESS {$$=new Node(yylineno, "SUCCESS");}
-// | FAIL {$$=new Node(yylineno, "FAIL");}
-// | NOP {$$=new Node(yylineno, "NOP");}
-// | '_' {$$=new Node(yylineno, "UNDERSCORE");}
-// | '(' top ')' {$$=$2;}
-// | '{' topList '}' {$$ = new Node(yylineno, "OBJECT", $2);}
-// | '[' topList ']' {$$ = new Node(yylineno, "LIST", $2);}
-// ;
+lambda: %empty {$$ = std::make_shared<Special>(SpecialType::EMPTY);} //TODO
+;
 
 %%
 
@@ -69,6 +82,6 @@ int main (int argc, char *argv[]){
 	driver drv;
 	drv.parse(argv[1]);
     std::cout<<"\tPARSE DONE!\n";
-    // cout<<(programList->printList())<<'\n';
+    std::cout<<(programList->print())<<'\n';
 	return 0;
 }

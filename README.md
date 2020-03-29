@@ -8,17 +8,23 @@ Current status: compiler generates syntax tree, but still need to fix a few bugs
 
 Virtual machine doesn't exists yet.
 
-Requirements: Bison 3.4, FLex 2.6.4, C++ 14 (I'm using G++ 7.2)
+Requirements: Bison 3.4, FLex 2.6.4, C++ 17 (I'm using G++ 7.2). C++ 17 is required, because AST uses std::variant.
 
-### Usage
+### Usage (C)
 
 - bison -d parser.y
 - flex lexer.l
-- g++ -std=c++14 parser.tab.c lex.yy.c node.cpp
+- g++ -std=c++17 parser.tab.c lex.yy.c node.cpp
+
+### Usage (C++)
+
+- bison -d parser.yy
+- flex scanner.l
+- g++ -std=c++17 driver.cc parser.tab.cc lex.yy.c ast.cpp
 
 ## WORK THAT REMAINS
 
-- main goal for now is to switch from C version of Bison to C++. It'll be a lot more easy to manipulate AST and to avoid bugs
+- For now main goal is to switch from C version of Bison to C++. It'll be a lot more easy to manipulate AST and to avoid bugs. C++ version is available in cpp_version folder.
 
 ### PARSER
 
