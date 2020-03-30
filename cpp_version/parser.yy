@@ -25,6 +25,11 @@
 %define api.token.prefix {TOK_}
 %token
   END  0	"end of file"
+  BIT_OR	"|"
+  BIT_XOR	"^"
+  BIT_AND	"&"
+  LESS		"<"
+  GRE		">"
   LPAREN	"("
   RPAREN	")"
   LCB		"{"
@@ -38,10 +43,12 @@
   ADD		"+"
   MUL		"*"
   DIV		"/"
-  MOD		"%"
+  MOD		"%"   
   UNDERSCORE "_"
 ;
-%type  <std::shared_ptr<AST>> topList top additive_expression multiplicative_expression
+%type  <std::shared_ptr<AST>> topList top 
+%type  <std::shared_ptr<AST>> inclusive_OR_expression exclusive_OR_expression binary_and_expression equality_expression
+%type  <std::shared_ptr<AST>> relational_expression shift_expression additive_expression multiplicative_expression 
 %type  <std::shared_ptr<AST>> unary_expression postfix_expression primary_expression lambda topOrEmpty
 %type  <std::shared_ptr<ID>> id
 %token <std::string> IDENTIFIER STRING_LITERAL
@@ -49,7 +56,7 @@
 %token <long long> I64_LITERAL
 %token <char> CHAR_LITERAL
 %token <bool> TRUE FALSE
-%token NIL SUCCESS FAIL NOP LAMBDA_BEGINER
+%token EQ NE LE GE SHL SHR NIL SUCCESS FAIL NOP LAMBDA_BEGINER
 
 %%
 
@@ -61,7 +68,58 @@ program: topList {programList = $1;}
 topList: top {$$=$1;}
 ;
 
-top: additive_expression {$$=$1;;}
+top: inclusive_OR_expression {$$=$1;;}
+;
+
+inclusive_OR_expression: exclusive_OR_expression {$$ = $1;}
+| inclusive_OR_expression "|" exclusive_OR_expression {
+		$$ = std::make_shared<Expression>(drv.location, ExpressionType::BIT_OR, $1, $3);
+	}
+;
+
+exclusive_OR_expression: binary_and_expression {$$ = $1;}
+| exclusive_OR_expression "^" binary_and_expression {
+		$$ = std::make_shared<Expression>(drv.location, ExpressionType::BIT_XOR, $1, $3);
+	}
+;
+
+binary_and_expression: equality_expression {$$ = $1;}
+| binary_and_expression "&" equality_expression {
+		$$ = std::make_shared<Expression>(drv.location, ExpressionType::BIT_AND, $1, $3);
+	}
+;
+
+equality_expression: relational_expression {$$ = $1;}
+| equality_expression EQ relational_expression {
+		$$ = std::make_shared<Expression>(drv.location, ExpressionType::EQU, $1, $3);
+	}
+| equality_expression NE relational_expression {
+		$$ = std::make_shared<Expression>(drv.location, ExpressionType::NEQU, $1, $3);
+	}
+;
+
+relational_expression: shift_expression {$$ = $1;}
+|   relational_expression "<" shift_expression {
+		$$ = std::make_shared<Expression>(drv.location, ExpressionType::LESS, $1, $3);
+	}
+|   relational_expression ">" shift_expression {
+		$$ = std::make_shared<Expression>(drv.location, ExpressionType::GREATER, $1, $3);
+	}
+|   relational_expression LE shift_expression {
+		$$ = std::make_shared<Expression>(drv.location, ExpressionType::LEQ, $1, $3);
+	}
+|   relational_expression GE shift_expression {
+		$$ = std::make_shared<Expression>(drv.location, ExpressionType::GEQ, $1, $3);
+	}
+;
+
+shift_expression: additive_expression {$$ = $1;}
+| shift_expression SHL additive_expression {
+		$$ = std::make_shared<Expression>(drv.location, ExpressionType::SHL, $1, $3);
+	}
+| shift_expression SHR additive_expression {
+		$$ = std::make_shared<Expression>(drv.location, ExpressionType::SHR, $1, $3);
+	}
 ;
 
 additive_expression: multiplicative_expression {$$ = $1;}

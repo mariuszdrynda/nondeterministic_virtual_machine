@@ -23,7 +23,7 @@ id    [a-zA-Z][a-zA-Z_0-9]*
 fractional_constant (({digit_sequence}?"."{digit_sequence})|({digit_sequence}"."))
 exponent_part ([Ee][+-]?{digit_sequence})
 digit_sequence ([0-9]("\'"?[0-9])*)
-int   [1-9][0-9]+
+int   [1-9][0-9]*
 blank [ \t\r]
 s_char [^"\"""\\"\n]
 c_char [^"\'""\\"\n]
@@ -53,6 +53,17 @@ c_char [^"\'""\\"\n]
 	/* operators */
 
 "\\\\"  return yy::parser::make_LAMBDA_BEGINER(loc);
+"<<"    return yy::parser::make_SHL(loc);
+">>"    return yy::parser::make_SHR(loc);
+"<="    return yy::parser::make_LE(loc);
+">="    return yy::parser::make_GE(loc);
+"=="    return yy::parser::make_EQ(loc);
+"!="    return yy::parser::make_NE(loc);
+"|"     return yy::parser::make_BIT_OR(loc);
+"^"     return yy::parser::make_BIT_XOR(loc);
+"&"     return yy::parser::make_BIT_AND(loc);
+"<"     return yy::parser::make_LESS(loc);  	
+">"     return yy::parser::make_GRE(loc);	
 "+"     return yy::parser::make_ADD(loc);
 "-"     return yy::parser::make_MINUS(loc);
 "*"     return yy::parser::make_MUL(loc);

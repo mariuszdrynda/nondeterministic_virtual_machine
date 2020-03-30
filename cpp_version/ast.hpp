@@ -5,7 +5,8 @@
 #include "location.hh"
 
 enum ExpressionType{
-    ADD, SUB, MUL, DIV, MOD,
+    BIT_OR, BIT_XOR, BIT_AND, EQU, NEQU,
+    LESS, GREATER, LEQ, GEQ, SHL, SHR, ADD, SUB, MUL, DIV, MOD,
     MINUS, LOG_NOT, BIT_NOT, DOT, ARRAY_ELEM, CALL
 };
 enum SpecialType{
