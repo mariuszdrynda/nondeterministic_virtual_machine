@@ -45,13 +45,28 @@ c_char [^"\'""\\"\n]
     /* TYPES */
 	/* keywords */
 
+"continue"	return yy::parser::make_CONTINUE(loc);
 "success"	return yy::parser::make_SUCCESS(loc);
+"switch"	return yy::parser::make_SWITCH(loc);
+"break"		return yy::parser::make_BREAK(loc);
+"every"		return yy::parser::make_EVERY(loc);
+"while"		return yy::parser::make_WHILE(loc);
+"yield"   	return yy::parser::make_YIELD(loc);
+"case"		return yy::parser::make_CASE(loc);
+"fail"		return yy::parser::make_FAIL(loc);
+"else"   	return yy::parser::make_ELSE(loc);
+"ret"   	return yy::parser::make_RET(loc);
 "nop"   	return yy::parser::make_NOP(loc);
 "nil"   	return yy::parser::make_NIL(loc);
-"fail"		return yy::parser::make_FAIL(loc);
+"if"   		return yy::parser::make_IF(loc);
+"do"		return yy::parser::make_DO(loc);
 
 	/* operators */
 
+"limit" return yy::parser::make_LIMIT(loc);
+"or"    return yy::parser::make_NDTOR(loc);
+"and"   return yy::parser::make_NDTAND(loc);
+"not"   return yy::parser::make_NDTNOT(loc);
 "\\\\"  return yy::parser::make_LAMBDA_BEGINER(loc);
 "<<"    return yy::parser::make_SHL(loc);
 ">>"    return yy::parser::make_SHR(loc);
@@ -59,6 +74,11 @@ c_char [^"\'""\\"\n]
 ">="    return yy::parser::make_GE(loc);
 "=="    return yy::parser::make_EQ(loc);
 "!="    return yy::parser::make_NE(loc);
+"||"    return yy::parser::make_LOGOR(loc);
+"&&"    return yy::parser::make_LOGAND(loc);
+"->"    return yy::parser::make_ARROW(loc);
+";"		return yy::parser::make_SEMICOLON(loc);
+"="		return yy::parser::make_ASS(loc);
 "|"     return yy::parser::make_BIT_OR(loc);
 "^"     return yy::parser::make_BIT_XOR(loc);
 "&"     return yy::parser::make_BIT_AND(loc);
@@ -79,6 +99,7 @@ c_char [^"\'""\\"\n]
 "]"     return yy::parser::make_RSB(loc);
 "_"		return yy::parser::make_UNDERSCORE(loc);
 "."		return yy::parser::make_DOT(loc);
+","		return yy::parser::make_COMMA(loc);
 
 	/* LITERALS */
 

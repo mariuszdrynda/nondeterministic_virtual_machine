@@ -13,7 +13,7 @@
 %define api.value.type union
 %type<NodeList*> topList structList dataList case_list elseOpt expressionList typeList emptyOrArgList argList
 %type<Node*> top oper lazyFunction return_statement assignment_expression 
-%type<Node*> switch_statement  case_statement loop_statement if_statement breaker nondeterministic_and_expression
+%type<Node*> statement  case_statement nondeterministic_and_expression
 %type<Node*> nondeterministic_or_expression nondeterministic_limit_expression nondeterministic_not_expression
 %type<Node*> logical_OR_expression logical_AND_expression inclusive_OR_expression exclusive_OR_expression
 %type<Node*> binary_and_expression equality_expression relational_expression shift_expression additive_expression 
@@ -91,11 +91,21 @@ return_statement: assignment_expression {$$ = $1;}
 | YIELD assignment_expression {$$ = new Node(yylineno, "YIELD", $2);}
 ;
 
-assignment_expression: switch_statement {$$ = $1;}
-| assignment_expression '=' switch_statement {$$ = new Node(yylineno, "ASS", $1, $3);}
+assignment_expression: statement {$$ = $1;}
+| assignment_expression '=' statement {$$ = new Node(yylineno, "ASS", $1, $3);}
 ;
 
-switch_statement: loop_statement {$$ = $1;}
+statement: expressionList
+    {
+        if($1->hasOneElement()) $$ = $1->giveMeOnlyElem();
+        else $$ = new Node(yylineno, $1);
+    }
+| CONTINUE {$$ = new Node(yylineno, "CONTINUE");}
+| BREAK {$$ = new Node(yylineno, "BREAK");}
+| IF '(' top ')' '{' topList '}' elseOpt {$$ = new Node(yylineno, "IF", $3, $6, $8);}
+| EVERY '(' top ')' '{' topList '}' {$$ = new Node(yylineno, "EVERY", $3, $6);}
+| WHILE '(' top ')' '{' topList '}' {$$ = new Node(yylineno, "WHILE", $3, $6);}
+| DO '{' topList '}' WHILE '(' top ')' {$$ = new Node(yylineno, "DO_WHILE", $7, $3);}
 | SWITCH '(' top ')' '{' case_list '}' {$$ = new Node(yylineno, "SWITCH", $3, $6);}
 ;
 
@@ -106,26 +116,8 @@ case_list: case_statement {$$ = new NodeList(yylineno, "CASE_LIST", $1);}
 case_statement: CASE top ARROW '{' topList '}' {$$ = new Node(yylineno, "CASE", $2, $5);}
 ;
 
-loop_statement: if_statement {$$ = $1;}
-| EVERY '(' top ')' '{' topList '}' {$$ = new Node(yylineno, "EVERY", $3, $6);}
-| WHILE '(' top ')' '{' topList '}' {$$ = new Node(yylineno, "WHILE", $3, $6);}
-| DO '{' topList '}' WHILE '(' top ')' {$$ = new Node(yylineno, "DO_WHILE", $7, $3);}
-
-if_statement: breaker {$$ = $1;}
-| IF '(' top ')' '{' topList '}' elseOpt {$$ = new Node(yylineno, "IF", $3, $6, $8);}
-;
-
 elseOpt: %empty {$$ = nullptr;} 
 | ELSE '{' topList '}' {$$ = $3;}
-;
-
-breaker: expressionList
-    {
-        if($1->hasOneElement()) $$ = $1->giveMeOnlyElem();
-        else $$ = new Node(yylineno, $1);
-    }
-| CONTINUE {$$ = new Node(yylineno, "CONTINUE");}
-| BREAK {$$ = new Node(yylineno, "BREAK");}
 ;
 
 expressionList: nondeterministic_and_expression {$$ = new NodeList(yylineno, "COMMA", $1);}
@@ -145,7 +137,7 @@ nondeterministic_limit_expression: nondeterministic_not_expression {$$ = $1;}
 ;
 
 nondeterministic_not_expression: logical_OR_expression {$$ = $1;}
-| NDTNOT logical_OR_expression {$$ = new Node(yylineno, "LOGNOT", $2);}
+| NDTNOT logical_OR_expression {$$ = new Node(yylineno, "NDTNOT", $2);}
 ;
 
 logical_OR_expression: logical_AND_expression {$$ = $1;}
@@ -254,6 +246,7 @@ typeList: type {$$ = new NodeList(yylineno, "TYPELIST", $1);}
 
 emptyOrArgList: %empty {$$ = new NodeList(yylineno, "ARGLIST", new Node(yylineno, "EMPTY"));}
 | argList {$$=$1;}
+;
 
 argList: ID ':' type {$$ = new NodeList(yylineno, "ARGLIST", new Node(yylineno, "ARG", $1, $3));}
 | argList ',' ID ':' type {$1->addNode(new Node(yylineno, "ARG", $3, $5)); $$ = $1;}
