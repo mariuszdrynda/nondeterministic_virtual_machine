@@ -17,14 +17,53 @@ enum SpecialType{
     CONTINUE, BREAK, NIL, SUCCESS, FAIL, NOP, UNDERSCORE, EMPTY
 };
 enum NodeListType{
-    SEPARATOR, CASE_LIST, COMMA
+    STRUCTLIST, DATALIST, SEPARATOR, CASE_LIST, COMMA, TYPELIST, ARGLIST
 };
 enum ReturnType{
     RET, YIELD
 };
+enum TypeType{
+    IDENT, OBJECT, FUNCTION, I64, F64, STRING, CHAR, BOOL, VOID, ARRAY
+};
+enum StructType{
+    STR, DATA
+};
 struct AST{
     virtual std::string print() = 0;
     yy::location location;
+};
+struct NodeList : AST{
+    NodeList(yy::location loc, NodeListType t, std::shared_ptr<AST> e);
+    std::string print();
+    void addNode(std::shared_ptr<AST> node);
+    bool hasOneElement();
+    std::shared_ptr<AST> giveMeOnlyElem();
+private:
+    std::vector<std::shared_ptr<AST>> list;
+    NodeListType type;
+};
+struct Type : AST{
+    Type(yy::location loc, TypeType t);
+    Type(yy::location loc, TypeType t, std::string n);
+    Type(yy::location loc, TypeType t, std::shared_ptr<Type> tt);
+    Type(yy::location loc, TypeType t, std::shared_ptr<NodeList> v);
+    Type(yy::location loc, TypeType t, std::shared_ptr<NodeList> v, std::shared_ptr<Type> tt);
+    std::string print();
+private:
+    TypeType type;
+    std::string name;
+    std::shared_ptr<Type> typeOfCompexType;
+    std::shared_ptr<NodeList> complexType;
+};
+struct Function : AST{
+    Function(yy::location loc, std::string n, std::shared_ptr<AST> a, 
+        std::shared_ptr<Type> r, std::shared_ptr<AST> b);
+    std::string print();
+private:
+    std::string name;
+    std::shared_ptr<AST> argList;
+    std::shared_ptr<Type> returnedType;
+    std::shared_ptr<AST> body;
 };
 struct Return : AST{
     Return(yy::location loc, ReturnType t, std::shared_ptr<AST> e);
@@ -42,16 +81,6 @@ private:
     std::shared_ptr<AST> condition;
     std::shared_ptr<AST> body;
     std::shared_ptr<AST> elseBody;
-};
-struct NodeList : AST{
-    NodeList(yy::location loc, NodeListType t, std::shared_ptr<AST> e);
-    std::string print();
-    void addNode(std::shared_ptr<AST> node);
-    bool hasOneElement();
-    std::shared_ptr<AST> giveMeOnlyElem();
-private:
-    std::vector<std::shared_ptr<AST>> list;
-    NodeListType type;
 };
 struct Expression : AST{
     Expression(yy::location loc, ExpressionType t, std::shared_ptr<AST> l, std::shared_ptr<AST> r);
@@ -96,4 +125,19 @@ struct List : AST{
     std::string print();
 private:
     std::shared_ptr<AST> value;
+};
+struct Argument : AST{
+    Argument(yy::location loc, std::string id, std::shared_ptr<Type> type);
+    std::string print();
+private:
+    std::string ident;
+    std::shared_ptr<Type> typeOfArg;
+};
+struct Struct : AST{
+    Struct(yy::location loc, StructType s, std::string id, std::shared_ptr<NodeList> l);
+    std::string print();
+private:
+    StructType structType;
+    std::string ident;
+    std::shared_ptr<NodeList> listOfFields;
 };

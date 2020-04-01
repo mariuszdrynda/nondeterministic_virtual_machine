@@ -2,6 +2,32 @@
 #include <string>
 #include "location.hh"
 
+Type::Type(yy::location loc, TypeType t, std::string n): type(t), name(n){
+    AST::location = loc;
+}
+Type::Type(yy::location loc, TypeType t): type(t){
+    AST::location = loc;
+}
+Type::Type(yy::location loc, TypeType t, std::shared_ptr<Type> tt): type(t), typeOfCompexType(tt){
+    AST::location = loc;
+}
+Type::Type(yy::location loc, TypeType t, std::shared_ptr<NodeList> v): type(t), complexType(v){
+    AST::location = loc;
+}
+Type::Type(yy::location loc, TypeType t, std::shared_ptr<NodeList> v, std::shared_ptr<Type> tt)
+    : type(t), complexType(v), typeOfCompexType(tt){
+        AST::location = loc;
+}
+std::string Type::print(){
+    return "(TYPE"+std::to_string(type)+")"; //TODO
+}
+Function::Function(yy::location loc, std::string n, std::shared_ptr<AST> a, std::shared_ptr<Type> r,
+    std::shared_ptr<AST> b): name(n), argList(a), returnedType(r), body(b){
+    AST::location = loc;
+}
+std::string Function::print(){
+    return "(FUNCTION"+name+argList->print()+returnedType->print()+body->print()+")";
+}
 Return::Return(yy::location loc, ReturnType t, std::shared_ptr<AST> e): returnType(t), expression(e){
     AST::location = loc;
 }
@@ -98,4 +124,17 @@ std::string List::print(){
     return "(LIST["+
         std::to_string(AST::location.begin.line)+
         "]"+value->print()+")";
+}
+Argument::Argument(yy::location loc, std::string id, std::shared_ptr<Type> t): ident(id), typeOfArg(t){
+    AST::location = loc;
+}
+std::string Argument::print(){
+    return "(ARG)"; //TODO
+}
+Struct::Struct(yy::location loc, StructType s, std::string id, std::shared_ptr<NodeList> l)
+    : structType(s), ident(id), listOfFields(l){
+    AST::location = loc;
+}
+std::string Struct::print(){
+    return "(STRUCT"+ident+listOfFields->print()+")";
 }

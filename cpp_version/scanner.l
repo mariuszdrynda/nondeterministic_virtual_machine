@@ -43,15 +43,26 @@ c_char [^"\'""\\"\n]
 %}
 
     /* TYPES */
+
+"String"    return yy::parser::make_STRING(loc);
+"I64"   	return yy::parser::make_I64(loc);
+"F64"   	return yy::parser::make_F64(loc);
+"Char"  	return yy::parser::make_CHAR(loc);
+"Bool"  	return yy::parser::make_BOOL(loc);
+"Void"  	return yy::parser::make_VOID(loc);
+
 	/* keywords */
 
 "continue"	return yy::parser::make_CONTINUE(loc);
+"operator"	return yy::parser::make_OPERATOR(loc);
 "success"	return yy::parser::make_SUCCESS(loc);
+"Struct"	return yy::parser::make_STRUCT(loc);
 "switch"	return yy::parser::make_SWITCH(loc);
 "break"		return yy::parser::make_BREAK(loc);
 "every"		return yy::parser::make_EVERY(loc);
 "while"		return yy::parser::make_WHILE(loc);
 "yield"   	return yy::parser::make_YIELD(loc);
+"data"		return yy::parser::make_DATA(loc);
 "case"		return yy::parser::make_CASE(loc);
 "fail"		return yy::parser::make_FAIL(loc);
 "else"   	return yy::parser::make_ELSE(loc);
@@ -60,6 +71,7 @@ c_char [^"\'""\\"\n]
 "nil"   	return yy::parser::make_NIL(loc);
 "if"   		return yy::parser::make_IF(loc);
 "do"		return yy::parser::make_DO(loc);
+"fn"		return yy::parser::make_FN(loc);
 
 	/* operators */
 
@@ -100,6 +112,7 @@ c_char [^"\'""\\"\n]
 "_"		return yy::parser::make_UNDERSCORE(loc);
 "."		return yy::parser::make_DOT(loc);
 ","		return yy::parser::make_COMMA(loc);
+":"		return yy::parser::make_COLON(loc);
 
 	/* LITERALS */
 
@@ -115,6 +128,9 @@ c_char [^"\'""\\"\n]
 {id}       return yy::parser::make_IDENTIFIER(yytext, loc);
 
     /* comments */
+
+"//"([^\n\\]|"\\\n")*$ {/*do nothing*/}
+"/*"([^"*"]|("*"[^"/"]))*"*/" {/*do nothing*/}
 
     /* spaces */
 
