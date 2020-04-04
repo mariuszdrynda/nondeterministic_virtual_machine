@@ -2,6 +2,8 @@
 #include <string>
 #include "location.hh"
 
+/* ============================================================ AST ============================================================ */
+
 Type::Type(yy::location loc, TypeType t, std::string n): type(t), name(n){
     AST::location = loc;
 }
@@ -137,4 +139,13 @@ Struct::Struct(yy::location loc, StructType s, std::string id, std::shared_ptr<N
 }
 std::string Struct::print(){
     return "(STRUCT"+ident+listOfFields->print()+")";
+}
+
+/* ============================================================ Semantic ============================================================ */
+
+std::shared_ptr<Function> NodeList::findMainFunction(){
+//     //TODO: find function of name main
+    // for(const auto& a : list){
+    //     if(a)
+    // }
 }

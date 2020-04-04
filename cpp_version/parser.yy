@@ -143,7 +143,7 @@ return_statement: assignment_expression {$$ = $1;}
 	}
 ;
 
-assignment_expression: statement {$$ = $1;}
+assignment_expression: statement {$$ = $1;} //TODO only id & primary expr on left side
 | assignment_expression "=" statement {
 		$$ = std::make_shared<Expression>(drv.location, ExpressionType::ASS, $1, $3);
 	}
@@ -391,10 +391,12 @@ void yy::parser::error (const location_type& l, const std::string& m){
 	std::cerr << l << ": " << m << '\n';
 }
 
+extern void semanticAnalyzerMain(std::shared_ptr<NodeList> programList);
 int main (int argc, char *argv[]){
 	driver drv;
 	drv.parse(argv[1]);
     std::cout<<"\tPARSE DONE!\n";
     std::cout<<(programList->print())<<'\n';
+	semanticAnalyzerMain(programList);
 	return 0;
 }

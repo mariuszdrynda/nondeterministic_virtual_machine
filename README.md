@@ -1,20 +1,18 @@
 # Nondeterministic Virtual Machine
 
-This will be a virtual machine for nondeterministic programming language write in C++ (also using Flex & Bison). Project will be divided into two parts: first, compiler of nondeterministic programming language, and second: virtual machine.
-
-Compiler will generate abstract syntax tree from input code and pass it into VM. VM will execute code.
+This will be a virtual machine for nondeterministic programming language written in C++ (with help of Flex & Bison). This project will be divided into two parts: first, compiler of nondeterministic programming language, and the second one: code executor.
 
 Current status: compiler generates syntax tree, but still need to fix a few bugs. Then need to implement semantic analyzer. Then perhaps do some optimalizations.
 
-Virtual machine doesn't exists yet.
+Executor doesn't exists yet.
 
-Requirements: Bison 3.4, Flex 2.6.4, C++ 17 (I'm using G++ 7.2). C++ 17 is required, because AST uses std::variant.
+If you want to compile this project you need Bison 3.4, Flex 2.6.4 and C++ 17 (I'm using G++ 7.2). You can use any later version of Bison and/or flex. C++ 17 is required, because AST uses std::variant.
 
 ### Usage
 
 - bison -d parser.yy
 - flex scanner.l
-- g++ -std=c++17 driver.cc parser.tab.cc lex.yy.c ast.cpp
+- g++ -std=c++17 driver.cc parser.tab.cc lex.yy.c ast.cpp semanticAnalyzer.cpp
 
 ## WORK THAT REMAINS
 
@@ -38,11 +36,20 @@ Requirements: Bison 3.4, Flex 2.6.4, C++ 17 (I'm using G++ 7.2). C++ 17 is requi
 
 ##### Detection of errors
 
+- no main function
+- more than one main function
+- more than one argument for function main
+- function main argument type other than List of String
+- calling function on left side of assignment
+- expression on left side of assignment
+- literal on left side of assignment (example: a = 5 = 7)
+- first occurence of identifier on right side of assignment expression
+- first occurence of identifier outside assignment expression
+- break / continue outside loop
+- other than 2 args in +/-/*/% operator overloading
+- no field in object (example: struct A{a:I64} /**/ obj = A(0);obj.b)
 - missing '_' in switch
-- a = 5 = 7
 - undefined operation for variables of two different types (example: a+b, for a:Int, b:String)
-- division by 0
-- index out of bound
 - two functions of same arguments types, and return type
 
 ### OPTIMALIZATIONS
@@ -58,6 +65,11 @@ Requirements: Bison 3.4, Flex 2.6.4, C++ 17 (I'm using G++ 7.2). C++ 17 is requi
 - executor
 - garbage collector (or whatever to deal with memory management)
 
+##### Catching runtime errors
+
+- division by 0
+- index out of bound
+
 ### OTHERS
 
 - add example codes
@@ -70,6 +82,9 @@ Requirements: Bison 3.4, Flex 2.6.4, C++ 17 (I'm using G++ 7.2). C++ 17 is requi
 
 ## PROPOSITIONS
 
+- add ranges
+- : as type assignment operator
+- add User-defined literals
 - add laziness
 - add modules
 - add shell

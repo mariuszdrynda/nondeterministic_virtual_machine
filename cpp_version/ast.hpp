@@ -5,6 +5,16 @@
 #include <vector>
 #include "location.hh"
 
+// enum NodeType{
+//     SWITCH, CASE, EVERY, WHILE, DO_WHILE, IF, ASS, NDT_AND, NDT_OR,
+//     LIMIT, NDT_NOT, LOG_OR, LOG_AND, BIT_OR, BIT_XOR, 
+//     BIT_AND, EQU, NEQU, LESS, GREATER, LEQ, GEQ, SHL, SHR, ADD, SUB, MUL,
+//     DIV, MOD, MINUS, LOG_NOT, BIT_NOT, DOT, ARRAY_ELEM, CALL,
+//     CONTINUE, BREAK, NIL, SUCCESS, FAIL, NOP, UNDERSCORE, EMPTY,
+//     STRUCTLIST, DATALIST, SEPARATOR, CASE_LIST, COMMA,
+//     TYPELIST, ARGLIST, RET, YIELD, IDENT, OBJECT, FUNCTION,
+//     I64, F64, STRING, CHAR, BOOL, VOID, ARRAY, STR, DATA
+// };
 enum StatementType{
     SWITCH, CASE, EVERY, WHILE, DO_WHILE, IF
 };
@@ -31,13 +41,17 @@ enum StructType{
 struct AST{
     virtual std::string print() = 0;
     yy::location location;
+    // NodeType nodeType;
 };
+struct Function;
 struct NodeList : AST{
     NodeList(yy::location loc, NodeListType t, std::shared_ptr<AST> e);
     std::string print();
     void addNode(std::shared_ptr<AST> node);
     bool hasOneElement();
     std::shared_ptr<AST> giveMeOnlyElem();
+    // Semantic
+    std::shared_ptr<Function> findMainFunction();
 private:
     std::vector<std::shared_ptr<AST>> list;
     NodeListType type;
