@@ -14,6 +14,14 @@ If you want to compile this project you need Bison 3.4, Flex 2.6.4 and C++ 17 (I
 - flex scanner.l
 - g++ -std=c++17 driver.cc parser.tab.cc lex.yy.c ast.cpp semanticAnalyzer.cpp
 
+## SEMANTIC ANALYZER
+
+##### Detection of errors
+
+- no main function
+- more than one function 
+- more than one argument for function main
+
 ## WORK THAT REMAINS
 
 ### PARSER
@@ -36,9 +44,6 @@ If you want to compile this project you need Bison 3.4, Flex 2.6.4 and C++ 17 (I
 
 ##### Detection of errors
 
-- no main function
-- more than one main function
-- more than one argument for function main
 - function main argument type other than List of String
 - calling function on left side of assignment
 - expression on left side of assignment

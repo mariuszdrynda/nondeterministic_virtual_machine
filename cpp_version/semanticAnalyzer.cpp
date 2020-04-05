@@ -30,6 +30,7 @@ void giveTypeToAllNodes(std::shared_ptr<AST> node){
 }
 void semanticAnalyzerMain(std::shared_ptr<NodeList> programList){
     std::shared_ptr<Function> entryPoint = programList->findMainFunction();
+    std::cout<<"\tFOUND FUNCTION MAIN!\n";
     giveTypeToAllNodes(entryPoint);
     // ProgramStructure programStructure = divideProgram(programList);
 }
