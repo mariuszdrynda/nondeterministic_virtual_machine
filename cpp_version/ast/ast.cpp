@@ -1,6 +1,6 @@
 #include "ast.hpp"
 #include <string>
-#include "location.hh"
+#include "../location.hh"
 
 /* ============================================================ AST ============================================================ */
 
@@ -165,6 +165,16 @@ std::string Struct::print(){
 
 /* ======================================================= Semantic ======================================================= */
 
+bool Type::operator ==(Type const &snd){
+    if(this->nodeType != snd.nodeType) return false;
+    else if(this->nodeType == NodeType::IDENT && this->name != snd.name) return false;
+    else if(this->nodeType == NodeType::ARRAY && this->typeOfCompexType != snd.typeOfCompexType) return false;
+    else if(this->nodeType == NodeType::OBJECT && this->complexType != snd.complexType) return false;
+    else if(this->nodeType == NodeType::FUNCTION &&
+        this->complexType != snd.complexType &&
+        this->typeOfCompexType != snd.typeOfCompexType) return false;
+    return true;
+}
 std::shared_ptr<Function> NodeList::findMainFunction(){
     unsigned found = 0;
     std::shared_ptr<Function> result;
@@ -178,7 +188,7 @@ std::shared_ptr<Function> NodeList::findMainFunction(){
         std::cerr<<"Error. No function main\n";
         exit(EXIT_FAILURE);
     } else if(found > 1){
-        std::cerr<<"Error. More than 1 function main\n";
+        std::cerr<<"Error. More than one function main\n";
         exit(EXIT_FAILURE);
     } else if(result->nrOfArguments() > 1){
         std::cerr<<"Error. Function main has more than 1 argument\n";
@@ -186,8 +196,34 @@ std::shared_ptr<Function> NodeList::findMainFunction(){
     }
     return result;
 }
+std::map<std::string, std::shared_ptr<AST>> NodeList::getIDs(){
+    std::map<std::string, std::shared_ptr<AST>> result;
+    for(const auto& a : list){
+        if(a->nodeType == NodeType::STR || a->nodeType == NodeType::DATA){
+            std::map<std::string, std::shared_ptr<AST>>::iterator it = result.find(a->getName());
+            if(it != result.end()){
+                std::cerr<<"Error in file: "<<a->location<<". Reusing identifier "<<a->getName()<<"\n";
+                exit(EXIT_FAILURE);
+            }
+        }
+        result[a->getName()] = a;
+    }
+    return result;
+}
 std::string AST::getName(){
     return "";
+}
+void AST::setStaticType(SemanticAnalyzerHelper sah){
+/*TODO:
+    - check all types, all nodes (and nodeList) have to have types
+    -- for functions it's type they return
+    -- for nodeList it's type of last node
+    -- for literals it's obvius
+    -- matching functions to their calls
+*/
+}
+void Function::setStaticType(SemanticAnalyzerHelper sah){
+    std::cout<<"SETTING STATIC TYPE FOR FUNCTION";
 }
 std::string Function::getName(){
     return name;
@@ -201,3 +237,7 @@ unsigned Function::nrOfArguments(){
         exit(EXIT_FAILURE);
     }
 }
+std::string Struct::getName(){
+    return ident;
+}
+SemanticAnalyzerHelper::SemanticAnalyzerHelper(std::map<std::string, std::shared_ptr<AST>> globals): globalIds(globals){}

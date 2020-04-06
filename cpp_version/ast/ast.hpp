@@ -3,7 +3,8 @@
 #include <variant>
 #include <memory>
 #include <vector>
-#include "location.hh"
+#include <map>
+#include "../location.hh"
 
 enum NodeType{
     SWITCH, CASE, EVERY, WHILE, DO_WHILE, IF, ASS, NDT_AND, NDT_OR,
@@ -17,13 +18,16 @@ enum NodeType{
     LAMBDA, OPERATOR_OVER, OBJECT_LITERAL, LIST_LITERAL, ARGUMENT,
     CHAR_LITERAL, I64_LITERAL, BOOL_LITERAL, F64_LITERAL, STRING_LITERAL
 };
+struct SemanticAnalyzerHelper;
 struct AST{
     virtual std::string print() = 0;
     yy::location location;
     NodeType nodeType;
     virtual std::string getName();
+    virtual void setStaticType(SemanticAnalyzerHelper sah);
 };
 struct Function;
+struct Type;
 struct NodeList : AST{
     NodeList(yy::location loc, NodeType t, std::shared_ptr<AST> e);
     std::string print();
@@ -31,6 +35,7 @@ struct NodeList : AST{
     unsigned nrOfElements();
     std::shared_ptr<AST> giveMeOnlyElem();
     // Semantic
+    std::map<std::string, std::shared_ptr<AST>> getIDs();
     std::shared_ptr<Function> findMainFunction();
 private:
     std::vector<std::shared_ptr<AST>> list;
@@ -46,6 +51,10 @@ private:
     std::string name;
     std::shared_ptr<Type> typeOfCompexType;
     std::shared_ptr<NodeList> complexType;
+    bool operator ==(Type const &snd);
+    // bool operator !=(Type const &snd){
+    //     return !(this == snd);
+    // }
 };
 struct Function : AST{
     Function(yy::location loc, NodeType t, std::string n, std::shared_ptr<AST> a, 
@@ -53,6 +62,7 @@ struct Function : AST{
     std::string print();
     std::string getName() override;
     unsigned nrOfArguments();
+    void setStaticType(SemanticAnalyzerHelper sah) override;
 private:
     std::string name;
     std::shared_ptr<AST> argList;
@@ -125,7 +135,16 @@ private:
 struct Struct : AST{
     Struct(yy::location loc, NodeType t, std::string id, std::shared_ptr<NodeList> l);
     std::string print();
+    std::string getName() override;
 private:
     std::string ident;
     std::shared_ptr<NodeList> listOfFields;
+};
+
+/* ======================================================= Semantic ======================================================= */
+
+struct SemanticAnalyzerHelper{
+    SemanticAnalyzerHelper(std::map<std::string, std::shared_ptr<AST>> globals);
+    std::map<std::string, std::shared_ptr<AST>> globalIds;
+    std::map<std::string, std::shared_ptr<Type>> localIds;
 };

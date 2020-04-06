@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "ast.hpp"
+#include "ast/ast.hpp"
 
 using ProgramStructure = std::tuple<std::vector<std::shared_ptr<Function>>, 
     std::vector<std::shared_ptr<Function>>, 
@@ -19,18 +19,9 @@ ProgramStructure divideProgram(std::shared_ptr<NodeList> programList){
     */
    return std::make_tuple(functions, operatorOverloaded, structures, datas);
 }
-void giveTypeToAllNodes(std::shared_ptr<AST> node){
-/*TODO:
-    - check all types, all nodes (and nodeList) have to have types
-    -- for functions it's type they return
-    -- for nodeList it's type of last node
-    -- for literals it's obvius
-    -- matching functions to their calls
-*/
-}
 void semanticAnalyzerMain(std::shared_ptr<NodeList> programList){
-    std::shared_ptr<Function> entryPoint = programList->findMainFunction();
-    std::cout<<"\tFOUND FUNCTION MAIN!\n";
-    giveTypeToAllNodes(entryPoint);
+    SemanticAnalyzerHelper sah(programList->getIDs());
+    programList->findMainFunction()->setStaticType(sah);
+    std::cout<<"\tSEMANTIC ANALYZER MAIN ENDED WORK!\n";
     // ProgramStructure programStructure = divideProgram(programList);
 }

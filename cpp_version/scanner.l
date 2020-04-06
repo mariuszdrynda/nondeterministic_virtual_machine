@@ -5,7 +5,7 @@
 	#include <cstring> // strerror
 	#include <string>
 	#include "driver.hh"
-    #include "ast.hpp"
+    #include "ast/ast.hpp"
 	#include "parser.tab.hh"
 	#define YY_DECL yy::parser::symbol_type yylex(driver& drv)
 %}
@@ -56,7 +56,7 @@ c_char [^"\'""\\"\n]
 "continue"	return yy::parser::make_CONTINUE(loc);
 "operator"	return yy::parser::make_OPERATOR(loc);
 "success"	return yy::parser::make_SUCCESS(loc);
-"Struct"	return yy::parser::make_STRUCT(loc);
+"struct"	return yy::parser::make_STRUCT(loc);
 "switch"	return yy::parser::make_SWITCH(loc);
 "break"		return yy::parser::make_BREAK(loc);
 "every"		return yy::parser::make_EVERY(loc);

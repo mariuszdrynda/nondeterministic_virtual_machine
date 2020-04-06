@@ -8,7 +8,7 @@
 %code requires {
 	#include <string>
 	#include <memory>
-	#include "ast.hpp"
+	#include "ast/ast.hpp"
 	class driver;
 }
 
