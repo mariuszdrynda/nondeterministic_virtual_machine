@@ -21,7 +21,7 @@ ProgramStructure divideProgram(std::shared_ptr<NodeList> programList){
 }
 void semanticAnalyzerMain(std::shared_ptr<NodeList> programList){
     SemanticAnalyzerHelper sah(programList->getIDs());
-    programList->findMainFunction()->setStaticType(sah);
+    programList->findMainFunction()->setInnerType(sah);
     std::cout<<"\tSEMANTIC ANALYZER MAIN ENDED WORK!\n";
     // ProgramStructure programStructure = divideProgram(programList);
 }

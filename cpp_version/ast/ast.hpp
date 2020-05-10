@@ -7,27 +7,26 @@
 #include "../location.hh"
 
 enum NodeType{
-    SWITCH, CASE, EVERY, WHILE, DO_WHILE, IF, ASS, NDT_AND, NDT_OR,
-    LIMIT, NDT_NOT, LOG_OR, LOG_AND, BIT_OR, BIT_XOR, 
-    BIT_AND, EQU, NEQU, LESS, GREATER, LEQ, GEQ, SHL, SHR, ADD, SUB, MUL,
-    DIV, MOD, MINUS, LOG_NOT, BIT_NOT, DOT, ARRAY_ELEM, CALL,
-    CONTINUE, BREAK, NIL, SUCCESS, FAIL, NOP, UNDERSCORE, EMPTY,
-    STRUCTLIST, DATALIST, SEPARATOR, CASE_LIST, COMMA,
-    TYPELIST, ARGLIST, RET, YIELD, IDENT, OBJECT, FUNCTION,
-    I64, F64, STRING, CHAR, BOOL, VOID, ARRAY, STR, DATA,
-    LAMBDA, OPERATOR_OVER, OBJECT_LITERAL, LIST_LITERAL, ARGUMENT,
-    CHAR_LITERAL, I64_LITERAL, BOOL_LITERAL, F64_LITERAL, STRING_LITERAL
+    SWITCH, CASE, EVERY, WHILE, DO_WHILE, IF, ASS, NDT_AND, NDT_OR, LIMIT, NDT_NOT, 
+    LOG_OR, LOG_AND, BIT_OR, BIT_XOR, BIT_AND, EQU, NEQU, LESS, GREATER, LEQ,
+    GEQ, SHL, SHR, ADD, SUB, MUL, DIV, MOD, MINUS, LOG_NOT,
+    BIT_NOT, DOT, ARRAY_ELEM, CALL, CONTINUE, BREAK, NIL, SUCCESS, FAIL, NOP, 
+    UNDERSCORE, EMPTY, STRUCTLIST, DATALIST, SEPARATOR, CASE_LIST, COMMA, TYPELIST, ARGLIST, RET,
+    YIELD, IDENT, OBJECT, FUNCTION, I64, F64, STRING, CHAR, BOOL, VOID,
+    ARRAY, STR, DATA, LAMBDA, OPERATOR_OVER, OBJECT_LITERAL, LIST_LITERAL, ARGUMENT, CHAR_LITERAL, I64_LITERAL,
+    BOOL_LITERAL, F64_LITERAL, STRING_LITERAL
 };
+struct Type;
 struct SemanticAnalyzerHelper;
 struct AST{
     virtual std::string print() = 0;
+    virtual std::string getName();
+    virtual void setInnerType(SemanticAnalyzerHelper sah) = 0;
+    std::shared_ptr<Type> innerType = nullptr;
     yy::location location;
     NodeType nodeType;
-    virtual std::string getName();
-    virtual void setStaticType(SemanticAnalyzerHelper sah);
 };
 struct Function;
-struct Type;
 struct NodeList : AST{
     NodeList(yy::location loc, NodeType t, std::shared_ptr<AST> e);
     std::string print();
@@ -62,7 +61,7 @@ struct Function : AST{
     std::string print();
     std::string getName() override;
     unsigned nrOfArguments();
-    void setStaticType(SemanticAnalyzerHelper sah) override;
+    void setInnerType(SemanticAnalyzerHelper sah) override;
 private:
     std::string name;
     std::shared_ptr<AST> argList;

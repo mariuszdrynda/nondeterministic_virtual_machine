@@ -1,10 +1,16 @@
 # Nondeterministic Virtual Machine
 
-This will be a virtual machine for nondeterministic programming language written in C++ (with help of Flex & Bison). This project will be divided into two parts: first, compiler of nondeterministic programming language, and the second one: code executor.
+This will be a virtual machine for nondeterministic programming language (NJA) written in C++ (with help of Flex & Bison). This project will be divided into two parts: first, compiler of nondeterministic programming language, and the second one: code executor.
 
-Current status: compiler generates syntax tree, but still need to fix a few bugs. Then need to implement semantic analyzer. Then perhaps do some optimalizations.
+Current status od C++ version: compiler generates syntax tree, but still need to fix a few bugs. Then need to implement semantic analyzer. Then perhaps do some optimalizations.
 
 Executor doesn't exists yet.
+
+Python version is an experimental implementation of NJA. I chose it because I wanted to have a playground where I can put all of my ideas and check if they work. It's not for normal usage. It's a dirty version and it not checks all errors and exceptions, so use it only if you know what to do.
+
+Current status of Python version: compiler and interpreter works but need to be tested.
+
+Python version needs PLY to work.
 
 If you want to compile this project you need Bison 3.4, Flex 2.6.4 and C++ 17 (I'm using G++ 7.2). You can use any later version of Bison and/or flex. C++ 17 is required, because AST uses std::variant.
 
@@ -18,8 +24,6 @@ If you want to compile this project you need Bison 3.4, Flex 2.6.4 and C++ 17 (I
 
 ##### Detection of errors
 
-- no main function
-- more than one function 
 - more than one argument for function main
 
 ## WORK THAT REMAINS
@@ -38,24 +42,16 @@ If you want to compile this project you need Bison 3.4, Flex 2.6.4 and C++ 17 (I
 
 ### SEMANTIC ANALYZER
 
-- build proper functions from generics functions
-- build proper structs from generic structures
-- matching functions to their calls
-
 ##### Detection of errors
 
-- function main argument type other than List of String
 - calling function on left side of assignment
+- calling for not defined function
 - expression on left side of assignment
 - literal on left side of assignment (example: a = 5 = 7)
 - first occurence of identifier on right side of assignment expression
 - first occurence of identifier outside assignment expression
 - break / continue outside loop
-- other than 2 args in +/-/*/% operator overloading
-- no field in object (example: struct A{a:I64} /**/ obj = A(0);obj.b)
-- missing '_' in switch
-- undefined operation for variables of two different types (example: a+b, for a:Int, b:String)
-- two functions of same arguments types, and return type
+- no field in object (example: struct A{a:I64} /**/ obj = A(0); obj.b)
 
 ### OPTIMALIZATIONS
 
@@ -70,11 +66,6 @@ If you want to compile this project you need Bison 3.4, Flex 2.6.4 and C++ 17 (I
 - executor
 - garbage collector (or whatever to deal with memory management)
 
-##### Catching runtime errors
-
-- division by 0
-- index out of bound
-
 ### OTHERS
 
 - add example codes
@@ -87,9 +78,14 @@ If you want to compile this project you need Bison 3.4, Flex 2.6.4 and C++ 17 (I
 
 ## PROPOSITIONS
 
-- add ranges
+- switch / match
+- types
+- function overriding
+- lambda / clojures
+- ranges
 - : as type assignment operator
-- add User-defined literals
-- add laziness
-- add modules
-- add shell
+- User-defined literals
+- laziness
+- modules
+- shell
+- operator overloading

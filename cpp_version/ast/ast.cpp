@@ -199,12 +199,10 @@ std::shared_ptr<Function> NodeList::findMainFunction(){
 std::map<std::string, std::shared_ptr<AST>> NodeList::getIDs(){
     std::map<std::string, std::shared_ptr<AST>> result;
     for(const auto& a : list){
-        if(a->nodeType == NodeType::STR || a->nodeType == NodeType::DATA){
-            std::map<std::string, std::shared_ptr<AST>>::iterator it = result.find(a->getName());
-            if(it != result.end()){
-                std::cerr<<"Error in file: "<<a->location<<". Reusing identifier "<<a->getName()<<"\n";
-                exit(EXIT_FAILURE);
-            }
+        std::map<std::string, std::shared_ptr<AST>>::iterator it = result.find(a->getName());
+        if(it != result.end()){
+            std::cerr<<"Error in file: "<<a->location<<". Reusing identifier "<<a->getName()<<"\n";
+            exit(EXIT_FAILURE);
         }
         result[a->getName()] = a;
     }
@@ -213,17 +211,18 @@ std::map<std::string, std::shared_ptr<AST>> NodeList::getIDs(){
 std::string AST::getName(){
     return "";
 }
-void AST::setStaticType(SemanticAnalyzerHelper sah){
 /*TODO:
     - check all types, all nodes (and nodeList) have to have types
-    -- for functions it's type they return
     -- for nodeList it's type of last node
     -- for literals it's obvius
     -- matching functions to their calls
 */
-}
-void Function::setStaticType(SemanticAnalyzerHelper sah){
+void Function::setInnerType(SemanticAnalyzerHelper sah){
     std::cout<<"SETTING STATIC TYPE FOR FUNCTION";
+    if(innerType == nullptr){
+        //TODO 
+    }
+    body->setInnerType(sah);
 }
 std::string Function::getName(){
     return name;

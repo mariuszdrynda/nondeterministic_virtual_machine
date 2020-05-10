@@ -57,11 +57,11 @@
 %type  <std::shared_ptr<AST>> equality_expression relational_expression shift_expression additive_expression 
 %type  <std::shared_ptr<AST>> multiplicative_expression unary_expression postfix_expression primary_expression
 %type  <std::shared_ptr<AST>> topOrEmpty emptyOrArgList
-%type  <std::shared_ptr<NodeList>> topList structList dataList case_list expressionList typeList argList
+%type  <std::shared_ptr<NodeList>> topList structList case_list expressionList typeList argList //dataList
 %type  <std::shared_ptr<ID>> id
 %type  <std::shared_ptr<Argument>> argument
 %type  <std::shared_ptr<Type>> type
-%type  <std::string> oper
+// %type  <std::string> oper
 %token <std::string> IDENTIFIER STRING_LITERAL
 %token <double> F64_LITERAL
 %token <long long> I64_LITERAL
@@ -88,15 +88,15 @@ top: return_statement {$$ = $1;}
 | STRUCT IDENTIFIER "{" structList "}" {
 	$$ = std::make_shared<Struct>(drv.location, NodeType::STR, $2, $4);
 }
-| DATA IDENTIFIER "{" dataList "}" {
-	$$ = std::make_shared<Struct>(drv.location, NodeType::DATA, $2, $4);
-}
+// | DATA IDENTIFIER "{" dataList "}" {
+// 	$$ = std::make_shared<Struct>(drv.location, NodeType::DATA, $2, $4);
+// }
 | FN IDENTIFIER "(" emptyOrArgList ")" ":" type "{" topList "}" {
 	$$ = std::make_shared<Function>(drv.location, NodeType::FUNCTION, $2, $4, $7, $9);
 }
-| OPERATOR oper "(" emptyOrArgList ")" ":" type "{" topList "}" {
-	$$ = std::make_shared<Function>(drv.location, NodeType::OPERATOR_OVER, $2, $4, $7, $9);
-}
+// | OPERATOR oper "(" emptyOrArgList ")" ":" type "{" topList "}" {
+// 	$$ = std::make_shared<Function>(drv.location, NodeType::OPERATOR_OVER, $2, $4, $7, $9);
+// }
 ;
 
 structList: argument ";" {
@@ -105,34 +105,34 @@ structList: argument ";" {
 | structList argument ";" {$1->addNode($2); $$ = $1;}
 ;
 
-dataList: id ";" {
-		$$ = std::make_shared<NodeList>(drv.location, NodeType::DATALIST, $1);
-	}
-| dataList id ";" {$1->addNode($2); $$ = $1;}
-;
+// dataList: id ";" {
+// 		$$ = std::make_shared<NodeList>(drv.location, NodeType::DATALIST, $1);
+// 	}
+// | dataList id ";" {$1->addNode($2); $$ = $1;}
+// ;
 
-oper: '+' {$$ = "?ADD";}
-| '-' {$$ = "?MINUS";}
-| '.' {$$ = "?DOT";}
-| '(' ')' {$$ = "?CALL";}
-| '{' '}' {$$ = "?OBJECT";}
-| '[' ']' {$$ = "?ARRAY_ELEMENT";}
-| '!' {$$ = "?NEG";}
-| '~' {$$ = "?BITNEG";}
-| '*' {$$ = "?MUL";}
-| '/' {$$ = "?DIV";}
-| '%' {$$ = "?MOD";}
-| '>' {$$ = "?GRE";}
-| '<' {$$ = "?LES";}
-| '&' {$$ = "?BIT_AND";}
-| '^' {$$ = "?BIT_XOR";}
-| '|' {$$ = "?BIT_OR";}
-| '=' {$$ = "?ASS";}
-| GE {$$ = "?GEQ";}
-| LE {$$ = "?LEQ";}
-| SHL {$$ = "?SHL";}
-| SHR {$$ = "?SHR";}
-;
+// oper: '+' {$$ = "?ADD";}
+// | '-' {$$ = "?MINUS";}
+// | '.' {$$ = "?DOT";}
+// | '(' ')' {$$ = "?CALL";}
+// | '{' '}' {$$ = "?OBJECT";}
+// | '[' ']' {$$ = "?ARRAY_ELEMENT";}
+// | '!' {$$ = "?NEG";}
+// | '~' {$$ = "?BITNEG";}
+// | '*' {$$ = "?MUL";}
+// | '/' {$$ = "?DIV";}
+// | '%' {$$ = "?MOD";}
+// | '>' {$$ = "?GRE";}
+// | '<' {$$ = "?LES";}
+// | '&' {$$ = "?BIT_AND";}
+// | '^' {$$ = "?BIT_XOR";}
+// | '|' {$$ = "?BIT_OR";}
+// | '=' {$$ = "?ASS";}
+// | GE {$$ = "?GEQ";}
+// | LE {$$ = "?LEQ";}
+// | SHL {$$ = "?SHL";}
+// | SHR {$$ = "?SHR";}
+// ;
 
 return_statement: assignment_expression {$$ = $1;}
 | RET assignment_expression {
