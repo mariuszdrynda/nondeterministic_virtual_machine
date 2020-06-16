@@ -1,7 +1,0 @@
-fn main(a:b):Void{nop};
-fn main2():Void{nop};
-fn main2(a:I64):Void{nop};
-struct lala{a:I64;};
-fn main2(a:Bool):Void{nop};
-fn main2(a:[F64]):Void{nop};
-struct lala{a:I64;} /*ERROR*/

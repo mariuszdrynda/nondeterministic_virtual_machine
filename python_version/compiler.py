@@ -45,8 +45,17 @@ t_GE = r'>='
 t_SHL = r'<<'
 t_SHR = r'>>'
 t_CHAR_LITERAL = r'\'\'' #TODO
-t_F64_LITERAL = r'\d+.\d+' #TODO
 t_STRING_LITERAL = r'\"\"' #TODO
+
+def t_F64_LITERAL(t):
+    r'[0-9]\.[0-9]+'
+    # '[-+]?[0-9]+(\.([0-9]+)?([eE][-+]?[0-9]+)?|[eE][-+]?[0-9]+)'
+    try:
+        t.value = float(t.value)
+    except ValueError:
+        print("Float value too large %d", t.value)
+        t.value = 0
+    return t
 
 def t_I64_LITERAL(t):
     r'\d+'
@@ -81,28 +90,26 @@ parseList = []
 start = 'program'
 
 def p_program(t):
-    '''program : topList '''
+    '''program : programList '''
     parseList.append(t[1])
     
-def p_topList(t):
-    '''topList : top
-        | topList ';' top
-    '''
-    if len(t) == 4:
+def p_programList(t):
+    '''programList : programList programTop
+        | programTop '''
+    if len(t) == 3:
         if isinstance(t[1], List):
-            t[1].append(t[3])
+            t[1].append(t[2])
             t[0] = t[1]
         else:
-            listOfAssignment = List(t[1], ListType.SEMICOLON)
-            listOfAssignment.append(t[3])
+            listOfAssignment = List(t[1], ListType.PROGRAM)
+            listOfAssignment.append(field)
             t[0] = listOfAssignment
     else:
-        t[0] = t[1]
+        t[0] = List(t[1], ListType.PROGRAM)
 
 def p_definition(t):
-    '''top : functionDefinition
-        | struct
-        | return_statement'''
+    '''programTop : functionDefinition
+        | struct '''
     t[0] = t[1]
 
 def p_struct(t):
@@ -128,8 +135,23 @@ def p_functionDefinition(t):
     '''functionDefinition : FN ID '(' argList ')' '{' topList '}' '''
     t[0] = Function(t[2], t[4], t[7])
 
+def p_topList(t):
+    '''topList : top
+        | topList ';' top
+    '''
+    if len(t) == 4:
+        if isinstance(t[1], List):
+            t[1].append(t[3])
+            t[0] = t[1]
+        else:
+            listOfAssignment = List(t[1], ListType.SEMICOLON)
+            listOfAssignment.append(t[3])
+            t[0] = listOfAssignment
+    else:
+        t[0] = t[1]
+
 def p_return_statement(t):
-    '''return_statement : assignment_expression
+    '''top : assignment_expression
         | RET assignment_expression
         | YIELD assignment_expression
     '''
@@ -266,7 +288,7 @@ def p_exclusive_OR_expression(t):
 
 def p_binary_and_expression(t):
     '''binary_and_expression : equality_expression
-        | binary_and_expression "&" equality_expression'''
+        | binary_and_expression '&' equality_expression'''
     if (len(t) == 2):
          t[0] = t[1]
     else:
@@ -421,6 +443,7 @@ def p_error(p):
         print("Syntax error at '%s'" % p.value)
     else:
         print("Syntax error")
+    #TODO exit program
 
 # ====================================================== MAIN ======================================================
 
@@ -463,22 +486,28 @@ def findDoWhile(nr, ir, i):
             i -= 1
 
 def findNextBreaker(nr, ir, i):
-    while True:
+    while ir[i][0] != "ENDFUN":
         if ir[i][0] == "ENDDOWHILE" and ir[i][1] == nr:
             return i + 1
         elif ir[i][0] == "ENDWHILE" and ir[i][1] == nr:
-            return i + 1
+            return i
         elif ir[i][0] == "ENDEVERY" and ir[i][1] == nr:
+            return i
+        else:
+            i += 1
+    raise Exception("break outside loop.")
+
+def findEndEvery(nr, ir, i):
+    while ir[i][0] != "ENDFUN":
+        if ir[i][0] == "ENDEVERY" and ir[i][1] == nr:
             return i + 1
         else:
             i += 1
-
-def findEndEvery(nr, ir, i):
-    return #TODO
-    while True:
-        pass
+    raise Exception("and outside every block.")
 
 def calculateJumps(ir):
+    # for a in ir:
+    #     print(a)
     i = 0
     for a in ir:
         if len(a) > 0 and a[0] == "THEN":
@@ -510,10 +539,15 @@ def generatrIR(ast):
         ir += item.__repr__() + '\n'
     return [a.split() for a in ir.splitlines()]
 
-def semantic(ir):
-    #TODO sprawdź czy break i continue są w pętli
-    return ir
+def semantic(ast):
+    for item in ast:
+        try:
+            item.semantic(SemanticChecker(0))
+        except Exception as e:
+            print("Semantic error.", e)
+            #TODO exit program
+    return ast
 
 def parserMain(inputCode):
     parser.parse(inputCode)
-    return calculateJumps(semantic(generatrIR(parseList)))
+    return calculateJumps(generatrIR(semantic(parseList)))

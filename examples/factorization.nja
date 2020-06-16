@@ -1,0 +1,11 @@
+fn main(){
+    n = 802293243671;
+    i = 3;
+    j = int(sqrt(n))+1;
+    while(i < j){
+        if(n%i == 0){
+            println(i, n/i)
+        };
+        i=i+2
+    }
+}

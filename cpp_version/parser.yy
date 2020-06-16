@@ -8,6 +8,9 @@
 %code requires {
 	#include <string>
 	#include <memory>
+	#include <iostream>
+	#include <bits/stdc++.h>
+	#include <stdlib.h>
 	#include "ast/ast.hpp"
 	class driver;
 }
@@ -48,34 +51,49 @@
   ASS		"="
   SEMICOLON ";"
   COLON		":"
-  UNDERSCORE "_"
 ;
-%type  <std::shared_ptr<AST>> top return_statement assignment_expression statement case_statement elseOpt
-%type  <std::shared_ptr<AST>> nondeterministic_and_expression nondeterministic_or_expression
-%type  <std::shared_ptr<AST>> nondeterministic_limit_expression nondeterministic_not_expression logical_OR_expression
+%type  <std::shared_ptr<AST>> top programTop assignment_expression statement elseOpt
+%type  <std::shared_ptr<AST>> nondeterministic_and_expression
+%type  <std::shared_ptr<AST>> nondeterministic_not_expression logical_OR_expression
 %type  <std::shared_ptr<AST>> logical_AND_expression inclusive_OR_expression exclusive_OR_expression binary_and_expression
 %type  <std::shared_ptr<AST>> equality_expression relational_expression shift_expression additive_expression 
 %type  <std::shared_ptr<AST>> multiplicative_expression unary_expression postfix_expression primary_expression
 %type  <std::shared_ptr<AST>> topOrEmpty emptyOrArgList
-%type  <std::shared_ptr<NodeList>> topList structList case_list expressionList typeList argList //dataList
+%type  <std::shared_ptr<NodeList>> programL topList structList expressionList argList
 %type  <std::shared_ptr<ID>> id
-%type  <std::shared_ptr<Argument>> argument
-%type  <std::shared_ptr<Type>> type
-// %type  <std::string> oper
 %token <std::string> IDENTIFIER STRING_LITERAL
 %token <double> F64_LITERAL
 %token <long long> I64_LITERAL
 %token <char> CHAR_LITERAL
 %token <bool> TRUE FALSE
-%token I64 F64 STRING CHAR BOOL VOID
-%token FN STRUCT DATA OPERATOR RET YIELD SWITCH CASE EVERY WHILE DO IF ELSE CONTINUE BREAK ARROW
-%token LIMIT NDTOR NDTAND NDTNOT LOGOR LOGAND EQ NE LE GE SHL SHR NIL SUCCESS FAIL NOP LAMBDA_BEGINER
+%token FN STRUCT RET YIELD EVERY WHILE DO IF ELSE CONTINUE BREAK
+%token NDTOR NDTAND NDTNOT LOGOR LOGAND EQ NE LE GE SHL SHR NIL FAIL
 
 %%
 
 %start program;
 
-program: topList {programList = $1;}
+program: programL {programList = $1;}
+;
+
+programL: programL programTop {$1->addNode($2); $$ = $1;}
+| programTop {
+		$$ = std::make_shared<NodeList>(drv.location, NodeType::PROGRAMLIST, $1);
+	}
+;
+
+programTop: STRUCT IDENTIFIER "{" structList "}" {
+	$$ = std::make_shared<Struct>(drv.location, NodeType::STR, $2, $4);
+}
+| FN IDENTIFIER "(" emptyOrArgList ")" "{" topList "}" {
+	$$ = std::make_shared<Function>(drv.location, NodeType::FUNCTION, $2, $4, $7);
+}
+;
+
+structList: id  {
+		$$ = std::make_shared<NodeList>(drv.location, NodeType::STRUCTLIST, $1);
+	}
+| structList "," id {$1->addNode($3); $$ = $1;}
 ;
 
 topList: top {
@@ -84,57 +102,7 @@ topList: top {
 | topList ";" top {$1->addNode($3); $$ = $1;}
 ;
 
-top: return_statement {$$ = $1;}
-| STRUCT IDENTIFIER "{" structList "}" {
-	$$ = std::make_shared<Struct>(drv.location, NodeType::STR, $2, $4);
-}
-// | DATA IDENTIFIER "{" dataList "}" {
-// 	$$ = std::make_shared<Struct>(drv.location, NodeType::DATA, $2, $4);
-// }
-| FN IDENTIFIER "(" emptyOrArgList ")" ":" type "{" topList "}" {
-	$$ = std::make_shared<Function>(drv.location, NodeType::FUNCTION, $2, $4, $7, $9);
-}
-// | OPERATOR oper "(" emptyOrArgList ")" ":" type "{" topList "}" {
-// 	$$ = std::make_shared<Function>(drv.location, NodeType::OPERATOR_OVER, $2, $4, $7, $9);
-// }
-;
-
-structList: argument ";" {
-		$$ = std::make_shared<NodeList>(drv.location, NodeType::STRUCTLIST, $1);
-	}
-| structList argument ";" {$1->addNode($2); $$ = $1;}
-;
-
-// dataList: id ";" {
-// 		$$ = std::make_shared<NodeList>(drv.location, NodeType::DATALIST, $1);
-// 	}
-// | dataList id ";" {$1->addNode($2); $$ = $1;}
-// ;
-
-// oper: '+' {$$ = "?ADD";}
-// | '-' {$$ = "?MINUS";}
-// | '.' {$$ = "?DOT";}
-// | '(' ')' {$$ = "?CALL";}
-// | '{' '}' {$$ = "?OBJECT";}
-// | '[' ']' {$$ = "?ARRAY_ELEMENT";}
-// | '!' {$$ = "?NEG";}
-// | '~' {$$ = "?BITNEG";}
-// | '*' {$$ = "?MUL";}
-// | '/' {$$ = "?DIV";}
-// | '%' {$$ = "?MOD";}
-// | '>' {$$ = "?GRE";}
-// | '<' {$$ = "?LES";}
-// | '&' {$$ = "?BIT_AND";}
-// | '^' {$$ = "?BIT_XOR";}
-// | '|' {$$ = "?BIT_OR";}
-// | '=' {$$ = "?ASS";}
-// | GE {$$ = "?GEQ";}
-// | LE {$$ = "?LEQ";}
-// | SHL {$$ = "?SHL";}
-// | SHR {$$ = "?SHR";}
-// ;
-
-return_statement: assignment_expression {$$ = $1;}
+top: assignment_expression {$$ = $1;}
 | RET assignment_expression {
 		$$ = std::make_shared<Return>(drv.location, NodeType::RET, $2);
 	}
@@ -143,7 +111,7 @@ return_statement: assignment_expression {$$ = $1;}
 	}
 ;
 
-assignment_expression: statement {$$ = $1;} //TODO only id & primary expr on left side
+assignment_expression: statement {$$ = $1;}
 | assignment_expression "=" statement {
 		$$ = std::make_shared<Expression>(drv.location, NodeType::ASS, $1, $3);
 	}
@@ -165,22 +133,8 @@ statement: expressionList {
 | DO "{" topList "}" WHILE "(" top ")" {
 		$$ = std::make_shared<Statement>(drv.location, NodeType::DO_WHILE, $7, $3);
 	}
-| SWITCH "(" top ")" "{" case_list "}" {
-		$$ = std::make_shared<Statement>(drv.location, NodeType::SWITCH, $3, $6);
-	}
 | CONTINUE {$$ = std::make_shared<Special>(drv.location, NodeType::CONTINUE);}
 | BREAK {$$ = std::make_shared<Special>(drv.location, NodeType::BREAK);}
-;
-
-case_list: case_statement {
-		$$ = std::make_shared<NodeList>(drv.location, NodeType::CASE_LIST, $1);
-	}
-| case_list case_statement {$1->addNode($2); $$ = $1;}
-;
-
-case_statement: CASE top ARROW "{" topList "}" {
-		$$ = std::make_shared<Statement>(drv.location, NodeType::CASE, $2, $5);
-	}
 ;
 
 elseOpt: %empty {$$ = std::make_shared<Special>(drv.location, NodeType::EMPTY);}
@@ -193,21 +147,9 @@ expressionList: nondeterministic_and_expression {
 | expressionList "," nondeterministic_and_expression {$1->addNode($3); $$ = $1;}
 ;
 
-nondeterministic_and_expression: nondeterministic_or_expression {$$ = $1;}
-| nondeterministic_and_expression NDTAND nondeterministic_or_expression {
+nondeterministic_and_expression: nondeterministic_not_expression  {$$ = $1;}
+| nondeterministic_and_expression NDTAND nondeterministic_not_expression {
 		$$ = std::make_shared<Expression>(drv.location, NodeType::NDT_AND, $1, $3);
-	}
-;
-		
-nondeterministic_or_expression: nondeterministic_limit_expression {$$ = $1;}
-| nondeterministic_or_expression NDTOR nondeterministic_limit_expression {
-		$$ = std::make_shared<Expression>(drv.location, NodeType::NDT_OR, $1, $3);
-	}
-;
-
-nondeterministic_limit_expression: nondeterministic_not_expression {$$ = $1;}
-| nondeterministic_limit_expression LIMIT nondeterministic_not_expression {
-		$$ = std::make_shared<Expression>(drv.location, NodeType::LIMIT, $1, $3);
 	}
 ;
 
@@ -321,7 +263,9 @@ postfix_expression: primary_expression {$$ = $1;}
 | postfix_expression "(" topOrEmpty ")" {
 		$$ = std::make_shared<Expression>(drv.location, NodeType::CALL, $1, $3);
 	}
- // | postfix_expression "{" topOrEmpty '}'
+ | postfix_expression "{" top "}" {
+		$$ = std::make_shared<Expression>(drv.location, NodeType::OBJECT, $1, $3);
+	}
 ;
 
 primary_expression: id {$$ = $1;}
@@ -332,16 +276,9 @@ primary_expression: id {$$ = $1;}
 | TRUE {$$ = std::make_shared<Literal>(drv.location, true);}
 | STRING_LITERAL {$$ = std::make_shared<Literal>(drv.location, $1);}
 | "(" top ")" {$$=$2;}
-| "{" top "}" {$$ = std::make_shared<Object>(drv.location, $2);}
-| "[" top "]" {$$ = std::make_shared<List>(drv.location, $2);}
+| "[" top "]" {$$ = std::make_shared<Expression>(drv.location, NodeType::MAKE_LIST, $2);}
 | NIL {$$ = std::make_shared<Special>(drv.location, NodeType::NIL);}
-| SUCCESS {$$ = std::make_shared<Special>(drv.location, NodeType::SUCCESS);}
 | FAIL {$$ = std::make_shared<Special>(drv.location, NodeType::FAIL);}
-| NOP {$$ = std::make_shared<Special>(drv.location, NodeType::NOP);}
-| "_" {$$ = std::make_shared<Special>(drv.location, NodeType::UNDERSCORE);}
-| LAMBDA_BEGINER "(" emptyOrArgList ")" ":" type "{" topList "}" {
-	$$ = std::make_shared<Function>(drv.location, NodeType::LAMBDA, "lambda", $3, $6, $8);
-}
 ;
 
 id: IDENTIFIER {$$ = std::make_shared<ID>(drv.location, $1);}
@@ -351,35 +288,14 @@ topOrEmpty: top {$$=$1;}
 | %empty {$$ = std::make_shared<Special>(drv.location, NodeType::EMPTY);}
 ;
 
-type: IDENTIFIER {$$ = std::make_shared<Type>(drv.location, NodeType::IDENT, $1);}
-| I64 {$$ = std::make_shared<Type>(drv.location, NodeType::I64);}
-| F64 {$$ = std::make_shared<Type>(drv.location, NodeType::F64);}
-| STRING {$$ = std::make_shared<Type>(drv.location, NodeType::STRING);}
-| CHAR {$$ = std::make_shared<Type>(drv.location, NodeType::CHAR);}
-| BOOL {$$ = std::make_shared<Type>(drv.location, NodeType::BOOL);}
-| VOID {$$ = std::make_shared<Type>(drv.location, NodeType::VOID);}
-| "[" type "]" {$$ = std::make_shared<Type>(drv.location, NodeType::ARRAY, $2);}
-| "{" typeList "}" {$$ = std::make_shared<Type>(drv.location, NodeType::OBJECT, $2);}
-| "(" typeList ":" type ")" {$$ = std::make_shared<Type>(drv.location, NodeType::FUNCTION, $2, $4);}
-;
-
-typeList: type {
-		$$ = std::make_shared<NodeList>(drv.location, NodeType::TYPELIST, $1);
-	}
-| typeList "," type {$1->addNode($3); $$ = $1;}
-;
-
-emptyOrArgList: %empty {$$ = std::make_shared<Special>(drv.location, NodeType::EMPTY);}
+emptyOrArgList: %empty {$$ = std::make_shared<NodeList>(drv.location, NodeType::ARGLIST);}
 | argList {$$=$1;}
 ;
 
-argList: argument {
+argList: id {
 		$$ = std::make_shared<NodeList>(drv.location, NodeType::ARGLIST, $1);
 	}
-| argList "," argument {$1->addNode($3); $$ = $1;}
-;
-
-argument: IDENTIFIER ":" type {$$ = std::make_shared<Argument>(drv.location, $1, $3);}
+| argList "," id {$1->addNode($3); $$ = $1;}
 ;
 
 %%
@@ -388,13 +304,147 @@ void yy::parser::error (const location_type& l, const std::string& m){
 	std::cerr << l << ": " << m << '\n';
 }
 
-extern void semanticAnalyzerMain(std::shared_ptr<NodeList> programList);
+auto findElse(std::string nr, std::vector<std::vector<std::string>>& ir, unsigned i) -> unsigned{
+	while(ir[i][0] != "ENDFUN"){
+		if(ir[i][0] == "ELSE" && ir[i][1] == nr) return i+1;
+		else ++i;
+	}
+	throw " internal error. No else block.";
+}
+
+auto findEndIf(std::string nr, std::vector<std::vector<std::string>>& ir, unsigned i) -> unsigned{
+	while(ir[i][0] != "ENDFUN"){
+		if(ir[i][0] == "ENDIF" && ir[i][1] == nr) return i;
+		else ++i;
+	}
+	throw " internal error. No if block.";
+}
+
+auto findWhile(std::string nr, std::vector<std::vector<std::string>>& ir, unsigned i) -> unsigned{
+	while(ir[i][0] != "FUN"){
+		if(ir[i][0] == "WHILE" && ir[i][1] == nr) return i;
+		else --i;
+	}
+	throw " internal error. No while block.";
+}
+
+auto findEndwhile(std::string nr, std::vector<std::vector<std::string>>& ir, unsigned i) -> unsigned{
+	while(ir[i][0] != "ENDFUN"){
+		if(ir[i][0] == "ENDWHILE" && ir[i][1] == nr) return i+1;
+		else ++i;
+	}
+	throw " internal error. No while block.";
+}
+
+auto findDoWhile(std::string nr, std::vector<std::vector<std::string>>& ir, unsigned i) -> unsigned{
+	while(ir[i][0] != "FUN"){
+		if(ir[i][0] == "DOWHILE" && ir[i][1] == nr) return i;
+		else --i;
+	}
+	throw " internal error. No while block.";
+}
+
+auto findNextBreaker(std::string nr, std::vector<std::vector<std::string>>& ir, unsigned i) -> unsigned{
+	while(ir[i][0] != "ENDFUN"){
+		if (ir[i][0] == "ENDDOWHILE" && ir[i][1] == nr) return i + 1;
+        else if (ir[i][0] == "ENDWHILE" && ir[i][1] == nr) return i;
+        else if (ir[i][0] == "ENDEVERY" && ir[i][1] == nr) return i;
+        else ++i;
+	}
+	throw "break outside loop.";
+}
+
+auto findNextContinue(std::string nr, std::vector<std::vector<std::string>>& ir, unsigned i) -> unsigned{
+	while(ir[i][0] != "ENDFUN"){
+		if (ir[i][0] == "ENDDOWHILE" && ir[i][1] == nr) return i + 1;
+        else if (ir[i][0] == "ENDWHILE" && ir[i][1] == nr) return i;
+        else ++i;
+	}
+	throw "break outside loop.";
+}
+
+auto findEndEvery(std::string nr, std::vector<std::vector<std::string>>& ir, unsigned i){
+    while(ir[i][0] != "ENDFUN"){
+        if(ir[i][0] == "ENDEVERY" && ir[i][1] == nr) return i;
+        else ++i;
+	}
+    throw "operator and outside every block.";
+}
+
+auto calculateJumps(std::vector<std::vector<std::string>> ir) -> std::vector<std::vector<std::string>>{
+	unsigned i = 0;
+    for(auto& a : ir){
+		if(a.size() > 0 && a[0] == "THEN") a.push_back(std::to_string(findElse(a[1], ir, i)));
+        if(a.size() > 0 && a[0] == "ELSE") a.push_back(std::to_string(findEndIf(a[1], ir, i)));
+        if(a.size() > 0 && a[0] == "DO") a.push_back(std::to_string(findEndwhile(a[1], ir, i)));
+        if(a.size() > 0 && a[0] == "ENDWHILE") a.push_back(std::to_string(findWhile(a[1], ir, i)));
+        if(a.size() > 0 && a[0] == "ENDDOWHILE") a.push_back(std::to_string(findDoWhile(a[1], ir, i)));
+        if(a.size() > 0 && (a[0] == "EVERYBODY" || a[0] == "NDT_AND")) a.push_back(std::to_string(findEndEvery(a[1], ir, i)));
+        if(a.size() > 0 && a[0] == "BREAK") a.push_back(std::to_string(findNextBreaker(a[1], ir, i)));
+        if(a.size() > 0 && a[0] == "CONTINUE") a.push_back(std::to_string(findNextContinue(a[1], ir, i)));
+        ++i;
+	}
+    return ir;
+}
+
+std::vector<std::string> split(const std::string& line, char delimiter){
+    std::vector <std::string> tokens;
+    std::stringstream check1(line);
+    std::string intermediate;
+    while(getline(check1, intermediate, delimiter)){ 
+        tokens.push_back(intermediate); 
+    }
+    return tokens; 
+}
+
+std::vector<std::vector<std::string>> generateIR(std::shared_ptr<NodeList> ast){
+	std::vector<std::vector<std::string>> ir;
+	std::string ir_string(ast->generatr_ir());
+	auto temp = split(ir_string, '\n');
+	for(auto& a : temp) ir.push_back(split(a, ' '));
+	return ir;
+}
+
+std::shared_ptr<NodeList> semantic(std::shared_ptr<NodeList> ast){
+    ast->semantic(SemanticAnalyzerHelper(0));
+	return ast;
+}
+
+std::vector<std::vector<std::string>> parserMain(std::shared_ptr<NodeList> programList){
+    return calculateJumps(generateIR(semantic(programList)));
+}
+
+extern void interpreterMain(std::vector<std::vector<std::string>> ir, bool d);
 int main (int argc, char *argv[]){
+	int res = 0;
 	driver drv;
-	drv.parse(argv[1]);
-    std::cout<<"\tPARSE DONE!\n";
-    std::cout<<(programList->print())<<'\n';
-	semanticAnalyzerMain(programList);
-    std::cout<<"\tCOMPILATION DONE!\n";
+	for (int i = 1; i < argc; ++i)
+		if (argv[i] == std::string ("-d")){drv.debug = true;}
+		else if(!drv.parse(argv[i])){}
+		else{res = 1;}
+	if(res == 0){
+		std::vector<std::vector<std::string>> ir;
+		try{
+			ir = parserMain(programList);
+		} catch(std::string err) {
+			std::cout<< "Semantic error. " << err <<'\n';
+			exit(1);
+		}
+		if(drv.debug){
+			std::cout<<"======== CODE ========\n";
+			auto i = 0;
+			for(auto& a : ir){
+				std::cout<<i<<" ";
+				for(auto& b : a){
+					std::cout<< b <<" ";
+				}
+				std::cout<<'\n';
+				++i;
+			}
+		}
+		interpreterMain(ir, drv.debug);
+	} else {
+		std::cerr << "Wrong arguments\n";
+	}
 	return 0;
 }

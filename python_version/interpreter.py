@@ -2,22 +2,19 @@ from compiler import parserMain
 import concurrent.futures
 from stackFrames import *
 from copy import deepcopy
-
-# class Settings:
-#     def __init__(self, n):
-#         self.nrOfThreads = n
+from buildinFunctions import buildInDict
 
 def prepareToExecute(ir):
     globalMem = {}
     ip = 0
     while ip < len(ir):
         if ir[ip] and ir[ip][0] == "FUN":
-            print(ir[ip][1])
+            # print(ir[ip][1])
             if ir[ip][1] in globalMem:
                 raise Exception("Reused name "+ir[ip][1]+" in global scope.")
             globalMem[ir[ip][1]] = FunctionLiteral(ip)
         if ir[ip] and ir[ip][0] == "STRUCT":
-            print(ir[ip][1])
+            # print(ir[ip][1])
             if ir[ip][1] in globalMem:
                 raise Exception("Reused name "+ir[ip][1]+" in global scope.")
             globalMem[ir[ip][1]] = StructLiteral(ip)
@@ -27,14 +24,12 @@ def prepareToExecute(ir):
     return ip, globalMem
 
 def deepc(a):
-    # print("DEEP")
     b = deepcopy(a)
-    # print("DEEP2")
     return b
 
 def makeNondeterminism(ir, ip, globalMem, memory, stack, deep):
     if not isinstance(stack[-1], YieldBuffer):
-        raise Exceprion("Internal error. YieldBuffer required on a top of the stack.")
+        raise Exception("Internal error. YieldBuffer required on a top of the stack.")
     buffer = stack[-1].list
     print(buffer)
     stack.pop()
@@ -59,7 +54,7 @@ def execute(ir, ip, globalMem, memory, stack, onstack, deep):
         stack.append(onstack)
     while True:
         currentInstr = ir[ip]
-        #debugging
+        # debugging
         print("======== DEBUGGER ========")
         print(globalMem)
         print(memory)
@@ -68,7 +63,8 @@ def execute(ir, ip, globalMem, memory, stack, onstack, deep):
         print(deep)
         print("CURRENT INSTRUCTION: ", currentInstr)
         if currentInstr[0] == "SEMICOLON":
-            while not isinstance(stack[-1], FunctionFrame):
+            #TODO sprawdzic czy trzeba dorzucić EveryBuffer
+            while not (isinstance(stack[-1], FunctionFrame) or isinstance(stack[-1], EveryBuffer)):
                 stack.pop()
             ip+=1
         elif currentInstr[0] == "FUN":
@@ -84,14 +80,13 @@ def execute(ir, ip, globalMem, memory, stack, onstack, deep):
                 for i in range(0, int(currentInstr[2])):
                     memory[-1][currentInstr[3+i]] = args.value[i]
             stack.append(FunctionFrame(currentInstr[1], ip))
-            currentFunction = currentInstr[1]
             ip+=1
         elif currentInstr[0] == "yield":
             #TODO jeśli na stosie nie ma everybuffer potraktuj jak ret
             if isinstance(stack[-1], FunctionFrame):
                 raise Exception("Internal error. Must yield something")
             toAddToBuffer = stack[-1]
-            stack.pop()
+            stack.pop() 
             if not ("?YieldBuffer" in memory[-1]):
                 memory[-1]["?YieldBuffer"] = YieldBuffer()
                 memory[-1]["?YieldBuffer"].list.append(toAddToBuffer)
@@ -101,6 +96,8 @@ def execute(ir, ip, globalMem, memory, stack, onstack, deep):
         elif currentInstr[0] == "ENDFUN" or currentInstr[0] == "ret":
             if "?YieldBuffer" in memory[-1]:
                 returned = memory[-1]["?YieldBuffer"]
+                if len(returned.list) == 1:
+                    returned = returned.list[0]
             elif isinstance(stack[-1], FunctionFrame):
                 returned = VoidFrame()
             else:
@@ -123,6 +120,7 @@ def execute(ir, ip, globalMem, memory, stack, onstack, deep):
         elif currentInstr[0] == "STRUCT":
             raise Exception("Internal error. Instruction STRUCT should never been executed.")
         elif currentInstr[0] == "=":
+            #TODO
             assignFrom = memory[-1][stack[-1].value] if isinstance(stack[-1], IdentifierFrame) else stack[-1]
             assignTo = stack[-2]
             memory[-1][assignTo.value] = assignFrom
@@ -132,15 +130,15 @@ def execute(ir, ip, globalMem, memory, stack, onstack, deep):
         elif currentInstr[0] == "EVERY":
             stack.append(EveryBuffer())
             ip+=1
-        elif currentInstr[0] == "EVERYBODY" or currentInstr[0] == "AND":
+        elif currentInstr[0] == "EVERYBODY" or currentInstr[0] == "and":
             if isinstance(stack[-1], FailFrame):
                 ip = currentInstr[2]
             while not isinstance(stack[-1], EveryBuffer):
                 stack.pop()
-            ip+=1
+            ip+=1 #TODO ip zmienia się 2 razy - czy to ok?
         elif currentInstr[0] == "ENDEVERY":
             return ip+1, (memory[-1][stack[-1].value] if isinstance(stack[-1], IdentifierFrame) else stack[-1])
-        elif currentInstr[0] == "do":
+        elif currentInstr[0] == "DOWHILEBODY":
             ip+=1
         elif currentInstr[0] == "DOWHILE":
             ip+=1
@@ -154,7 +152,7 @@ def execute(ir, ip, globalMem, memory, stack, onstack, deep):
                 ip += 1
         elif currentInstr[0] == "while":
             ip+=1
-        elif currentInstr[0] == "DO":
+        elif currentInstr[0] == "DO" or currentInstr[0] == "THEN":
             condition = stack[-1]
             stack.pop()
             if condition:
@@ -165,13 +163,6 @@ def execute(ir, ip, globalMem, memory, stack, onstack, deep):
             ip = currentInstr[2]
         elif currentInstr[0] == "IF":
             ip+=1
-        elif currentInstr[0] == "THEN":
-            condition = stack[-1]
-            stack.pop()
-            if condition:
-                ip += 1
-            else:
-                ip = currentInstr[2]
         elif currentInstr[0] == "ELSE":
             ip = currentInstr[2]
         elif currentInstr[0] == "ENDIF":
@@ -314,7 +305,7 @@ def execute(ir, ip, globalMem, memory, stack, onstack, deep):
             stack.append(result)
             ip+=1
         elif currentInstr[0] == "+":
-            #TODO error if not I64 or F64
+            #TODO error if not I64 or F64 or String
             a = memory[-1][stack[-1].value] if isinstance(stack[-1], IdentifierFrame) else stack[-1]
             b = memory[-1][stack[-2].value] if isinstance(stack[-2], IdentifierFrame) else stack[-2]
             result = a + b
@@ -371,15 +362,22 @@ def execute(ir, ip, globalMem, memory, stack, onstack, deep):
             ip+=1
         elif currentInstr[0] == "(":
             callingFunction = stack[-2]
-            if not (callingFunction.value in globalMem): #TODO search for build-in functions
-                raise Exception("Trying to call undefined function")
-            else:
+            if callingFunction.value in globalMem:
                 nextIp = globalMem[callingFunction.value].line
-            args = stack[-1]
-            del stack[-2:]
-            stack.append(RetFromFunctionFrame(ip))
-            ip = nextIp
-            stack.append(args)
+                args = stack[-1]
+                del stack[-2:]
+                stack.append(RetFromFunctionFrame(ip))
+                ip = nextIp
+                stack.append(args)
+            elif callingFunction.value in buildInDict:
+                args = stack[-1]
+                for a in args:
+                    a = memory[-1][stack[-1].value] if isinstance(stack[-1], IdentifierFrame) else a
+                del stack[-2:]
+                stack.append(buildInDict[callingFunction.value](args))
+                ip += 1
+            else: #Trying to call undefined function
+                stack.append(FailFrame())
         elif currentInstr[0] == ".":
             objectName = stack[-2].value
             fieldName = stack[-2].value
@@ -447,7 +445,7 @@ def execute(ir, ip, globalMem, memory, stack, onstack, deep):
             ip+=1
         else:
             raise Exception("Internal error. Unknown instruction.")
-        input("")
+        # input("")
         
 def main():
     with open('ex.txt', 'r') as file:
@@ -458,9 +456,7 @@ def main():
     for a in ir:
         print(i, a)
         i += 1
-    #     for b in a:
-    #         print(len(b))
-    #         print(b)
+
     # try:
     ip, globalMem = prepareToExecute(ir)
     execute(ir, ip, globalMem, [], [], None, 0)

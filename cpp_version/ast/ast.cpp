@@ -2,46 +2,91 @@
 #include <string>
 #include "../location.hh"
 
+unsigned loopNr = 0;
+unsigned ifNr = 0;
+unsigned statementNr = 0;
+
+std::string str(NodeType nt){
+    switch(nt){
+        case NodeType::SEPARATOR: return "SEMICOLON";
+        case NodeType::FUNCTION: return "FUN";
+        case NodeType::YIELD: return "YIELD";
+        case NodeType::RET: return "RET";
+        case NodeType::ASS: return "ASSIGN";
+        case NodeType::EVERY: return "EVERY";
+        case NodeType::NDT_AND: return "NDT_AND";
+        case NodeType::WHILE: return "WHILE";
+        case NodeType::DO_WHILE: return "DOWHILE";
+        case NodeType::IF: return "IF";
+        case NodeType::BREAK: return "BREAK";
+        case NodeType::CONTINUE: return "CONTINUE";
+        case NodeType::COMMA: return "COMMA";
+        case NodeType::NDT_NOT: return "NDT_NOT";
+        case NodeType::LOG_OR: return "LOG_OR";
+        case NodeType::LOG_AND: return "LOG_AND";
+        case NodeType::EQU: return "EQU";
+        case NodeType::NEQU: return "NEQU";
+        case NodeType::GEQ: return "GEQ";
+        case NodeType::LEQ: return "LEQ";
+        case NodeType::LESS: return "LESS";
+        case NodeType::GREATER: return "GREATER";
+        case NodeType::ADD: return "ADD";
+        case NodeType::SUB: return "SUB";
+        case NodeType::MUL: return "MUL";
+        case NodeType::DIV: return "DIV";
+        case NodeType::MOD: return "MOD";
+        case NodeType::MINUS: return "MINUS";
+        case NodeType::LOG_NOT: return "LOG_NOT";
+        case NodeType::CALL: return "CALL";
+        case NodeType::DOT: return "DOT";
+        case NodeType::OBJECT: return "OBJECT";
+        case NodeType::ARRAY_ELEM: return "ARRAY_ELEM";
+        case NodeType::IDENT: return "IDE";
+        case NodeType::NIL: return "NIL";
+        case NodeType::BOOL_LITERAL: return "BOOL";
+        case NodeType::CHAR_LITERAL: return "CHAR";
+        case NodeType::I64_LITERAL: return "I64";
+        case NodeType::F64_LITERAL: return "F64";
+        case NodeType::STRING_LITERAL: return "STRING";
+        case NodeType::MAKE_LIST: return "MAKE_LIST";
+        case NodeType::EMPTY: return "EMPTY";
+        case NodeType::PROGRAMLIST: return "PROGRAMLIST";
+    }
+    return "";
+}
+
 /* ============================================================ AST ============================================================ */
 
-Type::Type(yy::location loc, NodeType t, std::string n): name(n){
-    AST::nodeType = t;
-    AST::location = loc;
-}
-Type::Type(yy::location loc, NodeType t){
-    AST::nodeType = t;
-    AST::location = loc;
-}
-Type::Type(yy::location loc, NodeType t, std::shared_ptr<Type> tt): typeOfCompexType(tt){
-    AST::nodeType = t;
-    AST::location = loc;
-}
-Type::Type(yy::location loc, NodeType t, std::shared_ptr<NodeList> v): complexType(v){
-    AST::nodeType = t;
-    AST::location = loc;
-}
-Type::Type(yy::location loc, NodeType t, std::shared_ptr<NodeList> v, std::shared_ptr<Type> tt)
-    : complexType(v), typeOfCompexType(tt){
-        AST::nodeType = t;
-        AST::location = loc;
-}
-std::string Type::print(){
-    return "(TYPE"+std::to_string(nodeType)+")"; //TODO
-}
-Function::Function(yy::location loc, NodeType t, std::string n, std::shared_ptr<AST> a, std::shared_ptr<Type> r,
-    std::shared_ptr<AST> b): name(n), argList(a), returnedType(r), body(b){
+Function::Function(yy::location loc, NodeType t, std::string n, std::shared_ptr<AST> a, std::shared_ptr<AST> b)
+    : name(n), argList(a), body(b){
         AST::nodeType = t;
         AST::location = loc;
 }
 std::string Function::print(){
-    return "(FUNCTION"+name+argList->print()+returnedType->print()+body->print()+")";
+    return "(FUNCTION"+name+argList->print()+body->print()+")";
 }
+void Function::semantic(SemanticAnalyzerHelper sc){
+    body->semantic(sc);
+}
+std::string Function::generatr_ir(){
+    return "FUN "+name+" "+argList->generatr_ir()+"\n"+body->generatr_ir()+"ENDFUN\n";
+}
+
 Return::Return(yy::location loc, NodeType t, std::shared_ptr<AST> e): expression(e){
+    AST::nodeType = t;
     AST::location = loc;
 }
 std::string Return::print(){
-    return "(RETURN"+std::to_string(nodeType)+expression->print()+")";
+    return "(RETURN"+str(nodeType)+expression->print()+")";
 }
+void Return::semantic(SemanticAnalyzerHelper sc){
+    if(sc.assign == 1) throw str(nodeType)+" on the left side of assignment expression";
+    else expression->semantic(sc);
+}
+std::string Return::generatr_ir(){
+    return expression->generatr_ir()+str(nodeType)+"\n";
+}
+
 Statement::Statement(yy::location loc, NodeType t, std::shared_ptr<AST> c, std::shared_ptr<AST> b, std::shared_ptr<AST> e)
     : condition(c), body(b), elseBody(e){
         AST::nodeType = t;
@@ -52,10 +97,47 @@ Statement::Statement(yy::location loc, NodeType t, std::shared_ptr<AST> c, std::
         AST::nodeType = t;
         AST::location = loc;
 }
+void Statement::semantic(SemanticAnalyzerHelper sc){
+    if(sc.assign == 1) throw str(nodeType)+" on the left side of assignment expression";
+    else{
+        condition->semantic(SemanticAnalyzerHelper(0));
+        body->semantic(SemanticAnalyzerHelper(0));
+        if(elseBody != nullptr && elseBody->nodeType != NodeType::EMPTY){
+            elseBody->semantic(SemanticAnalyzerHelper(0));
+        }
+    }
+}
+std::string Statement::generatr_ir(){
+        unsigned curr = loopNr;
+        ++loopNr;
+        if(nodeType == NodeType::WHILE)
+            return "WHILE "+std::to_string(curr)+"\n"+condition->generatr_ir()+"DO "+std::to_string(curr)+"\n"+body->generatr_ir()+"ENDWHILE "+std::to_string(curr)+"\n";
+        else if(nodeType == NodeType::DO_WHILE)
+            return "DOWHILE "+std::to_string(curr)+"\n"+body->generatr_ir()+"DOWHILEBODY "+std::to_string(curr)+"\n"+condition->generatr_ir()+"ENDDOWHILE "+std::to_string(curr)+"\n";
+        else if(nodeType == NodeType::EVERY)
+            return "EVERY "+std::to_string(curr)+"\n"+condition->generatr_ir()+"EVERYBODY "+std::to_string(curr)+"\n"+body->generatr_ir()+"ENDEVERY "+std::to_string(curr)+"\n";
+        else if(nodeType == NodeType::IF){
+            curr = ifNr;
+            ++ifNr;
+            std::string builder = "IF "+std::to_string(curr)+"\n"+condition->generatr_ir()+"THEN "+std::to_string(curr)+"\n"+body->generatr_ir()+"ELSE "+std::to_string(curr)+"\n";
+            if(elseBody->nodeType != NodeType::EMPTY){
+                builder += elseBody->generatr_ir();
+            }
+            builder += "ENDIF "+std::to_string(curr)+"\n";
+            return builder;
+        }
+        else
+            throw "Internal error. Wrong statement type.";
+}
+
 std::string Statement::print(){
-    return "(STATEMENT"+std::to_string(nodeType)+
+    return "(STATEMENT"+str(nodeType)+
     condition->print()+
     body->print()+(elseBody ? elseBody->print() : "")+")";
+}
+NodeList::NodeList(yy::location loc, NodeType t){
+    AST::nodeType = t;
+    AST::location = loc;
 }
 NodeList::NodeList(yy::location loc, NodeType t, std::shared_ptr<AST> e){
     AST::nodeType = t;
@@ -64,7 +146,7 @@ NodeList::NodeList(yy::location loc, NodeType t, std::shared_ptr<AST> e){
 }
 std::string NodeList::print(){
     if(list.size() == 1) return list[0]->print();
-    std::string result = "(NODELIST"+std::to_string(nodeType)+"["+std::to_string(AST::location.begin.line)+"]";
+    std::string result = "(NODELIST"+str(nodeType)+"["+std::to_string(AST::location.begin.line)+"]";
     for(auto listElem : list) result += listElem->print();
     return result+")";
 }
@@ -77,6 +159,36 @@ unsigned NodeList::nrOfElements(){
 std::shared_ptr<AST> NodeList::giveMeOnlyElem(){
     return list[0];
 }
+void NodeList::semantic(SemanticAnalyzerHelper sc){
+    for(auto& a : list){
+        a->semantic(sc);
+    }
+}
+std::string NodeList::generatr_ir(){
+    if(nodeType == NodeType::SEPARATOR){
+        std::string ir = "";
+        for(int i = 0; i < list.size()-1; i++) ir += list[i]->generatr_ir()+"SEMICOLON\n";
+        // for(auto& a : list)
+        return ir+list.back()->generatr_ir();
+    } else if(nodeType == NodeType::COMMA || nodeType == NodeType::NDT_OR){
+        std::string ir = "";
+        for(auto& a : list) ir += a->generatr_ir();
+        return ir+str(nodeType)+" "+std::to_string(list.size())+"\n";
+    } else if(nodeType == NodeType::PROGRAMLIST){
+        std::string ir = "";
+        for(auto& a : list) ir += a->generatr_ir();
+        return ir;
+    } else if(nodeType == NodeType::STRUCTLIST){
+        std::string ir = ""; //todo
+        for(auto& a : list) ir += a->getName() + " ";
+        return std::to_string(list.size())+" "+ir;
+    } else if(nodeType == NodeType::ARGLIST){
+        std::string ir = "";
+        for(auto& a : list) ir += a->getName() + " ";
+        return std::to_string(list.size())+" "+ir;
+    }
+}
+
 Expression::Expression(yy::location loc, NodeType t, std::shared_ptr<AST> l, std::shared_ptr<AST> r)
     : left(l), right(r){
         AST::nodeType = t;
@@ -87,16 +199,62 @@ Expression::Expression(yy::location loc, NodeType t, std::shared_ptr<AST> l): le
     AST::location = loc;
 }
 std::string Expression::print(){
-    if(right) return "(EXPRESSION"+std::to_string(nodeType)+left->print()+right->print()+")";
-    else return "(EXPRESSION"+std::to_string(nodeType)+left->print()+")";
+    if(right) return "(EXPRESSION"+str(nodeType)+left->print()+right->print()+")";
+    else return "(EXPRESSION"+str(nodeType)+left->print()+")";
 }
+void Expression::semantic(SemanticAnalyzerHelper sc){
+    side = sc.assign;
+    if(sc.assign == 1){
+        if(!(nodeType == NodeType::DOT || nodeType == NodeType::ARRAY_ELEM))
+            throw str(nodeType)+" on the left side of assignment expression";
+        else{
+            left->semantic(SemanticAnalyzerHelper(0));
+            if(right != nullptr) right->semantic(SemanticAnalyzerHelper(0));
+        }
+    } else if(nodeType == NodeType::ASS){
+        left->semantic(SemanticAnalyzerHelper(1));
+        if(right != nullptr) right->semantic(SemanticAnalyzerHelper(-1));
+    } else{
+        left->semantic(sc);
+        if(right != nullptr) right->semantic(sc);
+    }
+}
+std::string Expression::generatr_ir(){
+    if(nodeType == NodeType::ASS)
+        return left->generatr_ir()+right->generatr_ir()+"ASSIGN\n";
+    else if(nodeType == NodeType::MINUS)
+        return left->generatr_ir()+"MINUS\n";
+    else if(nodeType == NodeType::BIT_NOT || nodeType == NodeType::LOG_NOT || nodeType == NodeType::NDT_NOT || nodeType == NodeType::MAKE_LIST)
+        return left->generatr_ir()+str(nodeType)+"\n";
+    else if(nodeType == NodeType::NDT_AND)
+        return left->generatr_ir()+right->generatr_ir()+str(nodeType)+" "+std::to_string(loopNr-1)+"\n";
+    else if(nodeType == NodeType::ARRAY_ELEM && side == 1)
+        return left->generatr_ir()+right->generatr_ir()+"REF_ARR_ELEM\n";
+    else if(nodeType == NodeType::DOT && side == 1)
+        return left->generatr_ir()+right->generatr_ir()+"REF_FIELD\n";
+    else if(nodeType == NodeType::CALL && side != 1)
+        return left->generatr_ir()+right->generatr_ir()+"ARGUMENT\nCALL\n";
+    else{
+        return left->generatr_ir()+right->generatr_ir()+str(nodeType)+"\n";
+    }
+}
+
 Special::Special(yy::location loc, NodeType t){
     AST::nodeType = t;
     AST::location = loc;
 }
 std::string Special::print(){
-    return "(SPECIAL"+std::to_string(nodeType)+")";
+    return "(SPECIAL"+str(nodeType)+")";
 }
+void Special::semantic(SemanticAnalyzerHelper sc){
+    if((nodeType == NodeType::BREAK || nodeType == NodeType::CONTINUE) && (sc.assign == 1 || sc.assign == -1))
+        throw str(nodeType)+" inside assignment expression";
+}
+std::string Special::generatr_ir(){
+    if(nodeType == NodeType::EMPTY) return "EMPTY\n";
+    return str(nodeType)+" "+std::to_string(loopNr-1)+"\n";
+}
+
 // template<typename T> Literal::Literal(T val) : value(val){}
 Literal::Literal(yy::location loc, char val): value(val){
     AST::nodeType = NodeType::CHAR_LITERAL;
@@ -122,6 +280,21 @@ std::string Literal::print(){
     // const auto a = std::get<1>(value);
     return "(LITERAL["+std::to_string(AST::location.begin.line)+"]"+std::to_string(value.index())+")";
 }
+void Literal::semantic(SemanticAnalyzerHelper sc){
+    if(sc.assign == 1) throw "Literal on the left side of assignment expression";
+}
+std::string Literal::generatr_ir(){
+    std::string val;
+    switch(value.index()){
+        case 0: val = std::to_string(std::get<0>(value)); break;
+        case 1: val += std::get<1>(value); break;
+        case 2: val = std::get<2>(value)? "TRUE" : "FALSE"; break;
+        case 3: val = std::to_string(std::get<3>(value)); break;
+        case 4: val = std::get<4>(value); break;
+    }
+    return str(nodeType)+" "+val+"\n";
+}
+
 ID::ID(yy::location loc, std::string n): name(n){
     AST::nodeType = NodeType::IDENT;
     AST::location = loc;
@@ -129,31 +302,17 @@ ID::ID(yy::location loc, std::string n): name(n){
 std::string ID::print(){
     return "(ID["+std::to_string(AST::location.begin.line)+"]"+name+")";
 }
-Object::Object(yy::location loc, std::shared_ptr<AST> v): value(v){
-    AST::nodeType = NodeType::OBJECT_LITERAL;
-    AST::location = loc;
+std::string ID::getName(){
+    return name;
 }
-std::string Object::print(){
-    return "(OBJECT["+
-        std::to_string(AST::location.begin.line)+
-        "]"+value->print()+")";
+void ID::semantic(SemanticAnalyzerHelper sc){
+    side = sc.assign;
+    return; //OK
 }
-List::List(yy::location loc, std::shared_ptr<AST> v): value(v){
-    AST::nodeType = NodeType::LIST_LITERAL;
-    AST::location = loc;
+std::string ID::generatr_ir(){
+    return "IDE "+name+"\n";
 }
-std::string List::print(){
-    return "(LIST["+
-        std::to_string(AST::location.begin.line)+
-        "]"+value->print()+")";
-}
-Argument::Argument(yy::location loc, std::string id, std::shared_ptr<Type> tof): ident(id), typeOfArg(tof){
-    AST::nodeType = NodeType::ARGUMENT;
-    AST::location = loc;
-}
-std::string Argument::print(){
-    return "(ARG)"; //TODO
-}
+
 Struct::Struct(yy::location loc, NodeType t, std::string id, std::shared_ptr<NodeList> l)
     : ident(id), listOfFields(l){
         AST::nodeType = t;
@@ -162,19 +321,15 @@ Struct::Struct(yy::location loc, NodeType t, std::string id, std::shared_ptr<Nod
 std::string Struct::print(){
     return "(STRUCT"+ident+listOfFields->print()+")";
 }
+void Struct::semantic(SemanticAnalyzerHelper sc){
+    return; //ok
+}
+std::string Struct::generatr_ir(){
+    return "STRUCT "+this->ident+" "+this->listOfFields->generatr_ir()+"\n";
+}
 
 /* ======================================================= Semantic ======================================================= */
 
-bool Type::operator ==(Type const &snd){
-    if(this->nodeType != snd.nodeType) return false;
-    else if(this->nodeType == NodeType::IDENT && this->name != snd.name) return false;
-    else if(this->nodeType == NodeType::ARRAY && this->typeOfCompexType != snd.typeOfCompexType) return false;
-    else if(this->nodeType == NodeType::OBJECT && this->complexType != snd.complexType) return false;
-    else if(this->nodeType == NodeType::FUNCTION &&
-        this->complexType != snd.complexType &&
-        this->typeOfCompexType != snd.typeOfCompexType) return false;
-    return true;
-}
 std::shared_ptr<Function> NodeList::findMainFunction(){
     unsigned found = 0;
     std::shared_ptr<Function> result;
@@ -211,19 +366,6 @@ std::map<std::string, std::shared_ptr<AST>> NodeList::getIDs(){
 std::string AST::getName(){
     return "";
 }
-/*TODO:
-    - check all types, all nodes (and nodeList) have to have types
-    -- for nodeList it's type of last node
-    -- for literals it's obvius
-    -- matching functions to their calls
-*/
-void Function::setInnerType(SemanticAnalyzerHelper sah){
-    std::cout<<"SETTING STATIC TYPE FOR FUNCTION";
-    if(innerType == nullptr){
-        //TODO 
-    }
-    body->setInnerType(sah);
-}
 std::string Function::getName(){
     return name;
 }
@@ -239,4 +381,6 @@ unsigned Function::nrOfArguments(){
 std::string Struct::getName(){
     return ident;
 }
-SemanticAnalyzerHelper::SemanticAnalyzerHelper(std::map<std::string, std::shared_ptr<AST>> globals): globalIds(globals){}
+SemanticAnalyzerHelper::SemanticAnalyzerHelper(short ass){
+    assign = ass;
+}

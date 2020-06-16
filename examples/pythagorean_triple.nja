@@ -1,0 +1,19 @@
+fn to(a,b){
+    while(a<=b){
+        yield a;
+        a = a+1
+    }
+}
+
+fn main(){
+    every(
+        (i = to(1, 200)) and
+        (j = to(1, 200)) and
+        (n = i*i+j*j) and
+        (m = int(sqrt(n))) and
+        (m*m == n &&
+        100 <= i+j+m &&
+        i+j+m <= 2000){
+            println(i+j+m)
+    }
+}

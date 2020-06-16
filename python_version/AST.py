@@ -4,6 +4,10 @@ loopNr = 0
 ifNr = 0
 statementNr = 0
 
+class SemanticChecker:
+    def __init__(self, assign):
+        self.assign = assign #1 - left, -1 - right, 0 - none
+
 class LiteralType(Enum):
     ID = "IDE"
     NIL = "NIL"
@@ -18,6 +22,9 @@ class Literal:
     def __init__(self, literalType, value):
         self.literalType = literalType
         self.value = value
+    def semantic(self, sc):
+        if sc.assign == 1:
+            raise Exception("Literal on the left side of assignment expression")
     def __repr__(self):
         if self.value != None:
             return self.literalType.value+" "+self.value.__repr__()+"\n"
@@ -27,6 +34,8 @@ class Literal:
 class Identifier:
     def __init__(self, value):
         self.value = value
+    def semantic(self, sc):
+        return #ok
     def __repr__(self):
         return "IDE "+self.value+"\n"
 
@@ -35,63 +44,53 @@ class Function:
         self.name = name
         self.argList = argList
         self.body = body
+    def semantic(self, sc):
+        self.body.semantic(sc)
     def __repr__(self):
         return "FUN "+self.name+" "+self.argList.__repr__()+"\n"+self.body.__repr__()+"ENDFUN\n"
-        # return ["FUN", self.name, self.argList.__repr__(), self.body.__repr__(), "ENDFUNC"]
 
 class Struct:
     def __init__(self, name, body):
         self.name = name
         self.body = body
+    def semantic(self, sc):
+        return #ok
     def __repr__(self):
         return "STRUCT "+self.name+" "+self.body.__repr__()+"\n"
-
-class Field:
-    def __init__(self, name):
-        self.name = name
-    def __repr__(self):
-        return "{Field, name: "+self.name+"}"
 
 class Return:
     def __init__(self, returnType, expression):
         self.returnType = returnType
         self.expression = expression
+    def semantic(self, sc):
+        if sc.assign == 1:
+            raise Exception(self.returnType+" on the left side of assignment expression")
+        else:
+            self.expression.semantic(sc)
     def __repr__(self):
         return self.expression.__repr__()+self.returnType+"\n"
-
-# class Switch:
-#     def __init__(self, statementType, condition, body):
-#         self.statementType = statementType
-#         self.condition = condition
-#         self.body = body
-#     def __repr__(self):
-#         global statementNr
-#         statementNr += 1
-#         curr = statementNr
-#         result = "SWITCH "+str(curr)+"\n"+self.condition.__repr__()+self.body.__repr__()+"ENDSWITCH "+str(curr)+"\n"
-#         statementNr -= 1
-#         return result
 
 class Statement:
     def __init__(self, statementType, condition, body):
         self.statementType = statementType
         self.condition = condition
         self.body = body
+    def semantic(self, sc):
+        if sc.assign == 1:
+            raise Exception(self.statementType+" on the left side of assignment expression")
+        else:
+            self.condition.semantic(SemanticChecker(sc))
+            self.body.semantic(SemanticChecker(sc))
     def __repr__(self):
         global loopNr
         curr = loopNr
         loopNr += 1
         if self.statementType == "while":
-            return self.statementType+" "+str(curr)+"\n"+self.condition.__repr__()+"DO "+str(curr)+"\n"+self.body.__repr__()+"ENDWHILE "+str(curr)+"\n"
+            return "while "+str(curr)+"\n"+self.condition.__repr__()+"DO "+str(curr)+"\n"+self.body.__repr__()+"ENDWHILE "+str(curr)+"\n"
         elif self.statementType == "do":
-            return "DOWHILE "+str(curr)+"\n"+self.body.__repr__()+self.statementType+" "+str(curr)+"\n"+self.condition.__repr__()+"ENDDOWHILE "+str(curr)+"\n"
+            return "DOWHILE "+str(curr)+"\n"+self.body.__repr__()+"DOWHILEBODY "+str(curr)+"\n"+self.condition.__repr__()+"ENDDOWHILE "+str(curr)+"\n"
         elif self.statementType == "every":
             return "EVERY "+str(curr)+"\n"+self.condition.__repr__()+"EVERYBODY "+str(curr)+"\n"+self.body.__repr__()+"ENDEVERY "+str(curr)+"\n"
-        # elif self.statementType == "case":
-        #     global statementNr
-        #     curr = statementNr
-        #     result = "CASE "+str(curr)+"\n"+self.condition.__repr__()+"ARROW "+str(curr)+"\n"+self.body.__repr__()+"ENDCASE\n"
-        #     return result
         else:
             raise Exception("Internal error. Wrong statement type.")
 
@@ -100,6 +99,13 @@ class ifStatement:
         self.condition = condition
         self.thenBody = thenBody
         self.elseBody = elseBody
+    def semantic(self, sc):
+        if sc.assign == 1:
+            raise Exception("if statement on the left side of assignment expression")
+        else:
+            self.condition.semantic(SemanticChecker(0))
+            self.thenBody.semantic(SemanticChecker(0))
+            if self.elseBody != None: self.elseBody.semantic(SemanticChecker(0))
     def __repr__(self):
         global ifNr
         curr = ifNr
@@ -107,9 +113,11 @@ class ifStatement:
         return "IF "+str(curr)+"\n"+self.condition.__repr__()+"THEN "+str(curr)+"\n"+self.thenBody.__repr__()+"ELSE "+str(curr)+"\n"+(self.elseBody.__repr__() if self.elseBody != None else "")+"ENDIF "+str(curr)+"\n"
 
 class Breaker:
-    #TODO dopuszczalne tylko w dowhile / while / switch
     def __init__(self, breakerType):
         self.breakerType = breakerType
+    def semantic(self, sc):
+        if sc.assign == 1 or sc.assign == -1:
+            raise Exception(str(self.breakerType)+" inside assignment expression")
     def __repr__(self):
         global loopNr
         return self.breakerType+" "+str(loopNr-1)+"\n"
@@ -119,23 +127,46 @@ class Expression:
         self.left = left
         self.right = right
         self.operator = operator
+    def semantic(self, sc):
+        if sc.assign == 1:
+            if not (self.operator == "." or self.operator == "["):
+                raise Exception(str(self.operator)+" on the left side of assignment expression")
+            else:
+                self.left.semantic(SemanticChecker(0))
+                self.right.semantic(SemanticChecker(0))
+        elif self.operator == "=":
+            self.left.semantic(SemanticChecker(1))
+            self.right.semantic(SemanticChecker(-1))
+        else:
+            self.left.semantic(sc)
+            self.right.semantic(sc)
     def __repr__(self):
-        #TODO semanticAnalyzer: czy po lewej stronie jest poprawne wyraenie
-        return self.left.__repr__()+self.right.__repr__()+self.operator+"\n"
+        global loopNr
+        if self.operator == "=":
+            return self.left.__repr__()+self.right.__repr__()+self.operator+"\n"
+        elif self.operator == "and":
+            return self.left.__repr__()+self.right.__repr__()+self.operator+" "+str(loopNr-1)+"\n"
+        else:
+            return self.left.__repr__()+self.right.__repr__()+self.operator+"\n"
 
 class UnaryExpression:
     def __init__(self, exp, operator):
         self.expression = exp
         self.operator = operator
+    def semantic(self):
+        if sc.assign == 1:
+            raise Exception(str(self.operator)+" on the left side of assignment expression")
+        else:
+            self.expression.semantic(SemanticChecker(sc))
     def __repr__(self):
         return self.expression.__repr__()+("MINUS" if self.operator == '-' else self.operator)+"\n"
 
 class ListType(Enum):
+    PROGRAM = "PROGRAM"
     COMMA = "COMMA"
     SEMICOLON = "SEMICOLON"
     ARGS = "ARGS"
     FIELDS = "FIELDS"
-    CASELIST = "CASELIST"
     OR = "OR"
 
 class List:
@@ -146,6 +177,9 @@ class List:
             self.l.append(element)
     def append(self, elem):
         self.l.append(elem)
+    def semantic(self, sc):
+        for a in self.l:
+            a.semantic(sc)
     def __repr__(self):
         if self.type == ListType.SEMICOLON:
             ir = ""
@@ -157,11 +191,6 @@ class List:
             for a in self.l:
                 ir += a + " "
             return str(len(self.l))+" "+ir
-        elif self.type == ListType.CASELIST:
-            ir = ""
-            for a in self.l:
-                ir += a.__repr__()
-            return ir
         else:
             ir = ""
             for a in self.l:

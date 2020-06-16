@@ -4,6 +4,7 @@
 	#include <cstdlib>
 	#include <cstring> // strerror
 	#include <string>
+	#include <iostream>
 	#include "driver.hh"
     #include "ast/ast.hpp"
 	#include "parser.tab.hh"
@@ -23,7 +24,7 @@ id    [a-zA-Z][a-zA-Z_0-9]*
 fractional_constant (({digit_sequence}?"."{digit_sequence})|({digit_sequence}"."))
 exponent_part ([Ee][+-]?{digit_sequence})
 digit_sequence ([0-9]("\'"?[0-9])*)
-int   [1-9][0-9]*
+int   [0-9]*
 blank [ \t\r]
 s_char [^"\"""\\"\n]
 c_char [^"\'""\\"\n]
@@ -42,32 +43,17 @@ c_char [^"\'""\\"\n]
   loc.step();
 %}
 
-    /* TYPES */
-
-"String"    return yy::parser::make_STRING(loc);
-"I64"   	return yy::parser::make_I64(loc);
-"F64"   	return yy::parser::make_F64(loc);
-"Char"  	return yy::parser::make_CHAR(loc);
-"Bool"  	return yy::parser::make_BOOL(loc);
-"Void"  	return yy::parser::make_VOID(loc);
-
 	/* keywords */
 
 "continue"	return yy::parser::make_CONTINUE(loc);
-"operator"	return yy::parser::make_OPERATOR(loc);
-"success"	return yy::parser::make_SUCCESS(loc);
 "struct"	return yy::parser::make_STRUCT(loc);
-"switch"	return yy::parser::make_SWITCH(loc);
 "break"		return yy::parser::make_BREAK(loc);
 "every"		return yy::parser::make_EVERY(loc);
 "while"		return yy::parser::make_WHILE(loc);
 "yield"   	return yy::parser::make_YIELD(loc);
-"data"		return yy::parser::make_DATA(loc);
-"case"		return yy::parser::make_CASE(loc);
 "fail"		return yy::parser::make_FAIL(loc);
 "else"   	return yy::parser::make_ELSE(loc);
 "ret"   	return yy::parser::make_RET(loc);
-"nop"   	return yy::parser::make_NOP(loc);
 "nil"   	return yy::parser::make_NIL(loc);
 "if"   		return yy::parser::make_IF(loc);
 "do"		return yy::parser::make_DO(loc);
@@ -75,11 +61,9 @@ c_char [^"\'""\\"\n]
 
 	/* operators */
 
-"limit" return yy::parser::make_LIMIT(loc);
 "or"    return yy::parser::make_NDTOR(loc);
 "and"   return yy::parser::make_NDTAND(loc);
 "not"   return yy::parser::make_NDTNOT(loc);
-"\\\\"  return yy::parser::make_LAMBDA_BEGINER(loc);
 "<<"    return yy::parser::make_SHL(loc);
 ">>"    return yy::parser::make_SHR(loc);
 "<="    return yy::parser::make_LE(loc);
@@ -88,7 +72,6 @@ c_char [^"\'""\\"\n]
 "!="    return yy::parser::make_NE(loc);
 "||"    return yy::parser::make_LOGOR(loc);
 "&&"    return yy::parser::make_LOGAND(loc);
-"->"    return yy::parser::make_ARROW(loc);
 ";"		return yy::parser::make_SEMICOLON(loc);
 "="		return yy::parser::make_ASS(loc);
 "|"     return yy::parser::make_BIT_OR(loc);
@@ -109,7 +92,6 @@ c_char [^"\'""\\"\n]
 "}"     return yy::parser::make_RCB(loc);
 "["     return yy::parser::make_LSB(loc);
 "]"     return yy::parser::make_RSB(loc);
-"_"		return yy::parser::make_UNDERSCORE(loc);
 "."		return yy::parser::make_DOT(loc);
 ","		return yy::parser::make_COMMA(loc);
 ":"		return yy::parser::make_COLON(loc);
@@ -119,7 +101,7 @@ c_char [^"\'""\\"\n]
 "true"		return yy::parser::make_TRUE(yytext, loc);
 "false"		return yy::parser::make_FALSE(yytext, loc);
 {int}		return make_I64_LITERAL(yytext, loc);
-(({fractional_constant}{exponent_part}?)|({digit_sequence}{exponent_part}))("f64")? return make_F64_LITERAL(yytext, loc);
+(({fractional_constant}{exponent_part}?)|({digit_sequence}{exponent_part})) return make_F64_LITERAL(yytext, loc);
 "\'"{c_char}"\'"	return make_CHAR_LITERAL(yytext, loc);
 "\""({s_char})*"\"" return make_STRING_LITERAL(yytext, loc);
 
@@ -130,7 +112,6 @@ c_char [^"\'""\\"\n]
     /* comments */
 
 "//"([^\n\\]|"\\\n")*$ {/*do nothing*/}
-"/*"([^"*"]|("*"[^"/"]))*"*/" {/*do nothing*/}
 
     /* spaces */
 
@@ -146,12 +127,12 @@ yy::parser::symbol_type make_CHAR_LITERAL(const std::string &s, const yy::parser
 	return yy::parser::make_CHAR_LITERAL((char) yytext[1], loc);
 }
 yy::parser::symbol_type make_STRING_LITERAL(const std::string &s, const yy::parser::location_type& loc){
-	return yy::parser::make_STRING_LITERAL(yytext, loc);
+	return yy::parser::make_STRING_LITERAL(s.substr(1, s.size() - 2), loc);
 }
 yy::parser::symbol_type make_F64_LITERAL(const std::string &s, const yy::parser::location_type& loc){
 	errno = 0;
 	double n = std::stod(s.c_str());
-	return yy::parser::make_F64_LITERAL((double) 0, loc);
+	return yy::parser::make_F64_LITERAL(n, loc);
 }
 yy::parser::symbol_type make_I64_LITERAL(const std::string &s, const yy::parser::location_type& loc){
 	errno = 0;

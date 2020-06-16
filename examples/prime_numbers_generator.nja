@@ -1,0 +1,25 @@
+fn to(a,b){
+    while(a<=b){
+        yield a;
+        a = a+1
+    }
+}
+
+fn main(){
+    every(n = to(2,100)){
+        i = 2;
+        j = int(sqrt(n))+1;
+        isPrime = true;
+        while(i < j){
+            if(n % i == 0){
+                isPrime = false;
+                i = 101
+            } else {
+                i = i + 1
+            }
+        };
+		if(isPrime){
+            println(n)
+        }
+	}
+}

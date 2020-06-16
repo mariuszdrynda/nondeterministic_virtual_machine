@@ -10,5 +10,6 @@ public:
 	void scan_end();
 	std::string file; // The name of the file being parsed.
 	yy::location location;// The token's location used by the scanner.
+	bool debug = false;
 };
 #endif // ! DRIVER_HH
